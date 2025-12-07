@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"log"
 	"sre-pilot/internal/monitor"
+	"sre-pilot/internal/watchtower"
 	"time"
 )
 
 func main() {
 	dryRun := flag.Bool("dry-run", false, "Enable dry-run mode (no changes applied)")
+	watch := flag.Bool("watch", false, "Run in Watchtower mode")
 	flag.Parse()
 
 	if *dryRun {
@@ -25,6 +27,12 @@ func main() {
 	client, err := monitor.NewClient("http://localhost:9090")
 	if err != nil {
 		log.Fatal("Failed to initialize Prometheus client: ", err)
+	}
+	if *watch {
+		fmt.Println("Aegis starting in Watchtower mode")
+		engine := watchtower.NewEngine(client)
+		engine.Run(context.Background())
+		return
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
