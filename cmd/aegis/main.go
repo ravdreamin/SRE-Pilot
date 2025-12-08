@@ -7,7 +7,9 @@ import (
 	"log"
 	"os"
 	"sre-pilot/internal/ai"
+	"sre-pilot/internal/billing"
 	"sre-pilot/internal/monitor"
+	"sre-pilot/internal/server"
 	"sre-pilot/internal/watchtower"
 	"time"
 
@@ -32,8 +34,19 @@ func main() {
 	}
 
 	if *ask != "" {
+
+		config, err := billing.LoadConfig()
+		if err != nil {
+			log.Printf("Warning: Could not load subscription: %v", err)
+		}
+
+		if !config.CanQuery() {
+			log.Fatal("🚫 Quota Exceeded. Upgrade to Pro for unlimited access.")
+		}
+
 		key := os.Getenv("GEMINI_KEY")
-		aiClient, err := ai.NewClient(key)
+
+		aiClient, err := ai.NewClient(key, config.GetModel())
 		if err != nil {
 			log.Fatal("Failed to initialize AI client: ", err)
 		}
@@ -46,6 +59,9 @@ func main() {
 			log.Fatal("Failed to Response", err)
 		}
 		fmt.Println("AI Response:", resp)
+
+		config.QueryCount++
+		billing.SaveConfig(config)
 
 		logAction(resp.Action, resp.Payload)
 
@@ -92,6 +108,10 @@ func main() {
 	}
 	if *watch {
 		fmt.Println("Aegis starting in Watchtower mode")
+
+		// Start Observability Server
+		go server.Start(":8080")
+
 		engine := watchtower.NewEngine(client)
 		engine.Run(context.Background())
 		return

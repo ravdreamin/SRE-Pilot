@@ -14,14 +14,14 @@ type Client struct {
 	client *genai.Client
 }
 
-func NewClient(apiKey string) (*Client, error) {
+func NewClient(apiKey, modelName string) (*Client, error) {
 	ctx := context.Background()
 	c, err := genai.NewClient(ctx, option.WithAPIKey(apiKey))
 	if err != nil {
 		return nil, err
 	}
 
-	model := c.GenerativeModel("gemini-2.5-flash")
+	model := c.GenerativeModel(modelName)
 
 	model.ResponseMIMEType = "application/json"
 
