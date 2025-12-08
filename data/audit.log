@@ -1,2 +1,0 @@
-[2025-12-08T14:47:19+05:30] Action: QUERY | Payload: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
-[2025-12-08T15:10:22+05:30] Action: QUERY | Payload: 100 * (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes))

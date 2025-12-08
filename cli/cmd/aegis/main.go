@@ -10,6 +10,7 @@ import (
 	"sre-pilot/internal/billing"
 	"sre-pilot/internal/monitor"
 	"sre-pilot/internal/server"
+	"sre-pilot/internal/ui"
 	"sre-pilot/internal/watchtower"
 	"time"
 
@@ -27,10 +28,12 @@ func main() {
 	ask := flag.String("ask", "", "Ask Aegis a question")
 	flag.Parse()
 
+	ui.Header("AEGIS SRE COPILOT")
+
 	if *dryRun {
-		fmt.Println("Aegis starting in DRY-RUN mode")
+		ui.Warning("Running in DRY-RUN mode")
 	} else {
-		fmt.Println("Aegis starting in LIVE mode")
+		ui.Success("System Online")
 	}
 
 	if *ask != "" {
@@ -41,7 +44,8 @@ func main() {
 		}
 
 		if !config.CanQuery() {
-			log.Fatal("🚫 Quota Exceeded. Upgrade to Pro for unlimited access.")
+			ui.Error("Quota Exceeded. Upgrade to Pro for unlimited access.")
+			os.Exit(1)
 		}
 
 		key := os.Getenv("GEMINI_KEY")
@@ -50,6 +54,8 @@ func main() {
 		if err != nil {
 			log.Fatal("Failed to initialize AI client: ", err)
 		}
+
+		ui.Info("Thinking...")
 		resp, err := aiClient.Analyze(context.Background(), ai.Request{
 			UserPrompt: *ask,
 			Context:    "",
@@ -58,7 +64,6 @@ func main() {
 		if err != nil {
 			log.Fatal("Failed to Response", err)
 		}
-		fmt.Println("AI Response:", resp)
 
 		config.QueryCount++
 		billing.SaveConfig(config)
@@ -67,7 +72,7 @@ func main() {
 
 		switch resp.Action {
 		case "QUERY":
-			fmt.Printf("Aegis executing: %s\n", resp.Payload)
+			ui.Box("Action Proposed", fmt.Sprintf("Type: QUERY\nPayload: %s", resp.Payload))
 
 			pClient, err := monitor.NewClient("http://localhost:9090")
 			if err != nil {
@@ -78,39 +83,53 @@ func main() {
 			if err != nil {
 				log.Fatalf("Execution failed: %v", err)
 			}
-			fmt.Printf("Result: %s\n", val)
 
-			fmt.Println("Analyzing result...")
+			ui.Success("Result: %s", val)
+
+			// Follow-up: Ask AI to explain the result
+			ui.Info("Analyzing result...")
 			explanation, err := aiClient.Analyze(context.Background(), ai.Request{
 				UserPrompt: fmt.Sprintf("The query result was: %s. Explain this briefly to the user who asked: %s", val, *ask),
 				Context:    "Evaluation Phase",
 				History:    []string{fmt.Sprintf("Action: QUERY, Payload: %s", resp.Payload)},
 			})
 			if err == nil && explanation.Action == "EXPLAIN" {
-				fmt.Printf("💡 Aegis Analysis: %s\n", explanation.Payload)
+				ui.Box("Aegis Analysis", explanation.Payload)
 			}
 
 		case "EXPLAIN", "FIX":
-			fmt.Printf("Aegis Explaination: %s\n", resp.Payload)
+			ui.Box("Aegis Explanation", resp.Payload)
 		default:
-			fmt.Println("Unknown action:", resp.Action)
+			ui.Error("Unknown action: %s", resp.Action)
 		}
 		return
 
 	}
 
 	// TODO: Initialize components
-	fmt.Println("Aegis CLI initialized (Phase 0 Skeleton)")
+	ui.Info("Initializing Components...")
 
 	client, err := monitor.NewClient("http://localhost:9090")
 	if err != nil {
 		log.Fatal("Failed to initialize Prometheus client: ", err)
 	}
 	if *watch {
-		fmt.Println("Aegis starting in Watchtower mode")
+		ui.Header("WATCHTOWER MODE ACTIVE")
 
-		// Start Observability Server
-		go server.Start(":8080")
+		// Load config for AI (needed for API server)
+		config, err := billing.LoadConfig()
+		if err != nil {
+			log.Printf("Warning: Could not load subscription: %v", err)
+		}
+		key := os.Getenv("GEMINI_KEY")
+		aiClient, err := ai.NewClient(key, config.GetModel())
+		if err != nil {
+			log.Printf("Warning: Failed to initialize AI client for server: %v", err)
+		}
+
+		// Start Observability Server with AI and Monitor clients
+		srv := server.NewServer(aiClient, client)
+		go srv.Start(":8080")
 
 		engine := watchtower.NewEngine(client)
 		engine.Run(context.Background())
@@ -125,7 +144,8 @@ func main() {
 		log.Fatal("Query failed: %v", err)
 	}
 
-	fmt.Printf("Success! Prometheus Response:\n%s\n", result)
+	ui.Success("Connectivity Check: OK")
+	fmt.Printf("%s\n", result)
 
 }
 func logAction(action, payload string) {
