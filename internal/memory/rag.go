@@ -1,54 +1,69 @@
 package memory
 
 import (
-	"encoding/json"
-	"os"
-	"strings"
+	"errors"
+	"math"
+	"sort"
 )
 
 type Incident struct {
-	Keywords []string `json:"keywords`
-	Context  string   `json:"context`
-	Solution string   `json:"solution`
+	ID                string    `json:"id"`
+	Title             string    `json:"title"`
+	Summary           string    `json:"summary"`
+	SuggestedSolution string    `json:"suggested_solution"`
+	Embedding         []float32 `json:"embedding"`
 }
 
-type Knowledgebase struct {
+type VectorStore struct {
 	Incidents []Incident
 }
 
-func LoadKnowledgebase(filepath string) (*Knowledgebase, error) {
-	file, err := os.ReadFile(filepath)
-	if err != nil {
-		return nil, err
+func CosineSimilarity(a, b []float32) (float32, error) {
+	if len(a) != len(b) {
+		return 0, errors.New("vector lengths do not match")
+	}
+	var dotProduct, normA, normB float64
+	for i := range a {
+		valA := float64(a[i])
+		valB := float64(b[i])
+
+		dotProduct += valA * valB
+		normA += valA * valA
+		normB += valB * valB
 	}
 
-	var incidents []Incident
-	if err := json.Unmarshal(file, &incidents); err != nil {
-		return nil, err
+	if normA == 0 || normB == 0 {
+		return 0, nil
 	}
-	return &Knowledgebase{Incidents: incidents}, nil
 
+	return float32(dotProduct / (math.Sqrt(normA) * math.Sqrt(normB))), nil
 }
 
-func (kb *Knowledgebase) RetrieveContext(query string) string {
-	query = strings.ToLower(query)
-	var matches []string
+type searchResult struct {
+	incident Incident
+	score    float32
+}
 
-	for _, incident := range kb.Incidents {
-
-		for _, keywords := range incident.Keywords {
-			if strings.Contains(query, keywords) {
-				formatted := "🧠 MEMORY: " + incident.Context + " | Suggestion: " + incident.Solution
-				matches = append(matches, formatted)
-				break
-			}
-		}
-
-		if len(matches) == 0 {
-			return ""
-		}
-
+func (s *VectorStore) Retrieve(query []float32, k int) ([]Incident, error) {
+	var results []searchResult
+	for _, incident := range s.Incidents {
+		score, _ := CosineSimilarity(query, incident.Embedding)
+		results = append(results, searchResult{incident: incident,
+			score: score,
+		})
 	}
-	return strings.Join(matches, "\n")
+
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].score > results[j].score
+	})
+
+	if k > len(results) {
+		k = len(results)
+	}
+	var final []Incident
+	for i := 0; i < k; i++ {
+		final = append(final, results[i].incident)
+	}
+	return final, nil
 
 }
