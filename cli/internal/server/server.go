@@ -14,10 +14,10 @@ import (
 
 type Server struct {
 	AI      *ai.Client
-	Monitor *monitor.Client
+	Monitor monitor.Client
 }
 
-func NewServer(aiClient *ai.Client, monitorClient *monitor.Client) *Server {
+func NewServer(aiClient *ai.Client, monitorClient monitor.Client) *Server {
 	return &Server{
 		AI:      aiClient,
 		Monitor: monitorClient,

@@ -7,3 +7,39 @@
 [2025-12-08T15:59:00+05:30] Action: QUERY | Payload: (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100
 [2025-12-08T16:10:17+05:30] Action: QUERY | Payload: 100 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100)
 [2025-12-08T16:10:43+05:30] Action: QUERY | Payload: ALERTS{alertstate="firing"}
+[2025-12-10T15:39:34+05:30] Action: QUERY | Payload: 100 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100)
+[2025-12-10T15:40:35+05:30] Action: QUERY | Payload: sum by (instance, mode) (rate(node_cpu_seconds_total[5m]))
+[2025-12-10T15:42:12+05:30] Action: EXPLAIN | Payload: To check system health, I can query metrics like CPU usage (node_cpu_seconds_total), memory availability (node_memory_MemAvailable_bytes), disk I/O (node_disk_io_time_seconds_total), or system load (node_load1). Please specify which component you'd like to check or confirm if you want a general health overview.
+[2025-12-10T15:42:45+05:30] Action: EXPLAIN | Payload: Prometheus does not provide a direct PromQL query to list all metrics. To view available metrics, use the Prometheus API endpoint `/api/v1/label/__name__/values` or check the `/metrics` endpoint of your Prometheus server. For summaries, consider queries like `count by (__name__) (count_values(1, __name__))` for metric name counts.
+[2025-12-10T15:43:49+05:30] Action: QUERY | Payload: sum by (instance) (rate(node_cpu_seconds_total{mode!~"idle"}[5m])) * 100;
+(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100
+[2025-12-10T15:45:11+05:30] Action: QUERY | Payload: avg by (instance) (rate(node_cpu_seconds_total{mode!="idle"}[5m])) * 100 or (node_memory_Active_bytes / node_memory_MemTotal_bytes) * 100
+[2025-12-10T15:53:11+05:30] Action: QUERY | Payload: up
+[2025-12-10T15:54:07+05:30] Action: QUERY | Payload: avg by (instance) (rate(cpu_usage_seconds_total[5m]))
+[2025-12-10T15:54:59+05:30] Action: QUERY | Payload: 100 * (1 - (avg by (instance) (rate(node_cpu_seconds_total{mode='idle'}[1m])))) and 100 - (100 * node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)
+[2025-12-10T15:56:06+05:30] Action: QUERY | Payload: sum by (instance) (rate(node_cpu_seconds_total{mode!~"idle|_"}[5m])) * 100 as cpu_usage_percent, (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 as memory_usage_percent
+[2025-12-10T15:57:16+05:30] Action: QUERY | Payload: sum(rate(node_cpu_seconds_total{mode!="idle"}[5m])) by (instance) * 100
+(node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100
+[2025-12-10T15:57:28+05:30] Action: QUERY | Payload: sum(rate(node_cpu_seconds_total{mode!='idle'}[5m])) by (instance) / sum(rate(node_cpu_seconds_total[5m])) by (instance) * 100
+(node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100
+[2025-12-10T15:58:08+05:30] Action: QUERY | Payload: 100 * (1 - (avg by (instance) (rate(node_cpu_seconds_total{mode='idle'}[1m])))) and 100 * (1 - (avg by (instance) (rate(node_memory_MemFree_bytes[1m]) + rate(node_memory_Cached_bytes[1m]) + rate(node_memory_Buffers_bytes[1m])) / rate(node_memory_MemTotal_bytes[1m])))
+[2025-12-10T15:59:13+05:30] Action: QUERY | Payload: 100 * (1 - (avg by (instance) (rate(node_cpu_seconds_total{mode='idle'}[1m])))) and 100 * (1 - (avg by (instance) (rate(node_memory_MemFree_bytes[1m]) + rate(node_memory_Cached_bytes[1m]) + rate(node_memory_Buffers_bytes[1m])) / rate(node_memory_MemTotal_bytes[1m])))
+[2025-12-10T15:59:41+05:30] Action: QUERY | Payload: rate(node_cpu_seconds_total[5m])
+node_memory_MemAvailable_bytes
+[2025-12-10T16:00:43+05:30] Action: QUERY | Payload: rate(node_cpu_seconds_total{mode!="idle"}[5m]) * 100
+((node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes) * 100
+[2025-12-10T16:01:13+05:30] Action: QUERY | Payload: CPU Usage: sum by (instance) (rate(node_cpu_seconds_total{mode!~"idle|_steal"}[5m])) * 100
+
+Memory Usage: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100
+[2025-12-10T16:02:06+05:30] Action: QUERY | Payload: CPU usage: avg by (instance) (rate(node_cpu_seconds_total{mode!='idle'}[5m])) * 100
+Memory usage: (node_memory_Active_bytes / node_memory_MemTotal_bytes) * 100
+[2025-12-10T16:04:26+05:30] Action: QUERY | Payload: 100 - avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100 or (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100
+[2025-12-10T16:11:45+05:30] Action: QUERY | Payload: 100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+(node_memory_Active_bytes / node_memory_MemTotal_bytes) * 100
+[2025-12-10T16:12:15+05:30] Action: QUERY | Payload: 100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) or (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100
+[2025-12-10T16:12:39+05:30] Action: EXPLAIN | Payload: To summarize the system you typically query a set of key metrics: CPU usage (e.g., sum by (instance) (rate(node_cpu_seconds_total[5m]))), memory availability (node_memory_MemAvailable_bytes), disk usage (node_filesystem_avail_bytes), network traffic (rate(node_network_receive_bytes_total[5m]) and rate(node_network_transmit_bytes_total[5m])), and service health (up). A single PromQL query cannot meaningfully "summarize all metrics"; you need to run multiple queries or a recording rule that aggregates the most important ones. Combine the results in your dashboard or CLI to get a full picture.
+[2025-12-10T16:12:57+05:30] Action: QUERY | Payload: {__name__=~".+"}
+[2025-12-10T16:13:05+05:30] Action: QUERY | Payload: {__name__!=""}
+[2025-12-10T16:13:26+05:30] Action: QUERY | Payload: count by (__name__)({__name__!=""})
+[2025-12-10T16:14:01+05:30] Action: EXPLAIN | Payload: To summarize the system by checking all metrics and providing percentages, you can start by listing all metric names with a query like `{__name__=~".+"}`. However, calculating a percentage requires a reference value (e.g., total capacity, max value, or sum of related metrics). Without a specific denominator, generic percentages cannot be derived. If you define the reference for each metric (e.g., CPU usage as a percentage of total CPU, memory usage as a percentage of total memory), you can then use PromQL expressions such as `100 * (metric_name / reference_metric)` to compute the percentages. Provide the reference metrics or the context you want percentages relative to, and I can craft the exact PromQL queries for you.
+[2025-12-10T16:14:15+05:30] Action: QUERY | Payload: (label_replace(100 * sum by (instance) (rate(node_cpu_seconds_total{mode!="idle"}[5m])) / sum by (instance) (rate(node_cpu_seconds_total[5m])),"metric","cpu_usage","","")) or (label_replace(100 * (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes,"metric","mem_usage","","")) or (label_replace(100 * (node_filesystem_size_bytes - node_filesystem_free_bytes) / node_filesystem_size_bytes,"metric","disk_usage","",""))

@@ -18,9 +18,8 @@ import (
 )
 
 func main() {
-	// Load .env file if it exists
 	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found, relying on system environment variables")
+
 	}
 
 	dryRun := flag.Bool("dry-run", false, "Enable dry-run mode (no changes applied)")
@@ -28,7 +27,7 @@ func main() {
 	ask := flag.String("ask", "", "Ask Aegis a question")
 	flag.Parse()
 
-	ui.Header("AEGIS SRE COPILOT")
+	ui.Header("AEGIS SRE COPILOT (Qwen Edition)")
 
 	if *dryRun {
 		ui.Warning("Running in DRY-RUN mode")
@@ -36,128 +35,116 @@ func main() {
 		ui.Success("System Online")
 	}
 
+	config, err := billing.LoadConfig()
+	if err != nil {
+		log.Printf("Initializing new user config...")
+	}
+
+	key := os.Getenv("GROQ_API_KEY")
+	if key == "" {
+		ui.Error("Missing GROQ_API_KEY. Please set it in your .env file.")
+		ui.Info("Get your free key at: https://console.groq.com")
+		os.Exit(1)
+	}
+
+	aiClient, err := ai.NewClient(key, "openai/gpt-oss-120b")
+	if err != nil {
+		log.Fatal("Failed to initialize AI client: ", err)
+	}
+
+	// --- INTERACTIVE MODE ---
 	if *ask != "" {
-
-		config, err := billing.LoadConfig()
-		if err != nil {
-			log.Printf("Warning: Could not load subscription: %v", err)
-		}
-
-		if !config.CanQuery() {
-			ui.Error("Quota Exceeded. Upgrade to Pro for unlimited access.")
-			os.Exit(1)
-		}
-
-		key := os.Getenv("GEMINI_KEY")
-
-		aiClient, err := ai.NewClient(key, config.GetModel())
-		if err != nil {
-			log.Fatal("Failed to initialize AI client: ", err)
-		}
-
-		ui.Info("Thinking...")
+		ui.Info("Thinking (Qwen 2.5)...")
 		resp, err := aiClient.Analyze(context.Background(), ai.Request{
 			UserPrompt: *ask,
-			Context:    "",
+			Context:    "Interactive CLI",
 			History:    []string{},
 		})
 		if err != nil {
-			log.Fatal("Failed to Response", err)
+			log.Fatal("Failed to get response: ", err)
 		}
 
+		// Update stats (just for local tracking)
 		config.QueryCount++
 		billing.SaveConfig(config)
 
 		logAction(resp.Action, resp.Payload)
 
-		switch resp.Action {
-		case "QUERY":
-			ui.Box("Action Proposed", fmt.Sprintf("Type: QUERY\nPayload: %s", resp.Payload))
-
-			pClient, err := monitor.NewClient("http://localhost:9090")
-			if err != nil {
-				log.Fatal("Failed to connect to Prometheus: %v", err)
-			}
-
-			val, err := pClient.Query(context.Background(), resp.Payload, time.Now())
-			if err != nil {
-				log.Fatalf("Execution failed: %v", err)
-			}
-
-			ui.Success("Result: %s", val)
-
-			// Follow-up: Ask AI to explain the result
-			ui.Info("Analyzing result...")
-			explanation, err := aiClient.Analyze(context.Background(), ai.Request{
-				UserPrompt: fmt.Sprintf("The query result was: %s. Explain this briefly to the user who asked: %s", val, *ask),
-				Context:    "Evaluation Phase",
-				History:    []string{fmt.Sprintf("Action: QUERY, Payload: %s", resp.Payload)},
-			})
-			if err == nil && explanation.Action == "EXPLAIN" {
-				ui.Box("Aegis Analysis", explanation.Payload)
-			}
-
-		case "EXPLAIN", "FIX":
-			ui.Box("Aegis Explanation", resp.Payload)
-		default:
-			ui.Error("Unknown action: %s", resp.Action)
-		}
+		handleAction(resp, aiClient, *ask)
 		return
-
 	}
 
-	// TODO: Initialize components
+	// --- WATCHTOWER / SERVER MODE ---
 	ui.Info("Initializing Components...")
 
-	client, err := monitor.NewClient("http://localhost:9090")
+	promClient, err := monitor.NewClient("http://localhost:9090")
 	if err != nil {
-		log.Fatal("Failed to initialize Prometheus client: ", err)
+		log.Fatal("Failed to connect to Prometheus: ", err)
 	}
+
 	if *watch {
 		ui.Header("WATCHTOWER MODE ACTIVE")
 
-		// Load config for AI (needed for API server)
-		config, err := billing.LoadConfig()
-		if err != nil {
-			log.Printf("Warning: Could not load subscription: %v", err)
-		}
-		key := os.Getenv("GEMINI_KEY")
-		aiClient, err := ai.NewClient(key, config.GetModel())
-		if err != nil {
-			log.Printf("Warning: Failed to initialize AI client for server: %v", err)
-		}
-
-		// Start Observability Server with AI and Monitor clients
-		srv := server.NewServer(aiClient, client)
+		// Start API Server
+		srv := server.NewServer(aiClient, promClient)
 		go srv.Start(":8080")
 
-		engine := watchtower.NewEngine(client)
+		// Start Background Monitor
+		engine := watchtower.NewEngine(promClient)
 		engine.Run(context.Background())
 		return
 	}
 
+	// Default Connectivity Check
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	result, err := client.Query(ctx, "up", time.Now())
+	result, err := promClient.Query(ctx, "up", time.Now())
 	if err != nil {
-		log.Fatal("Query failed: %v", err)
+		log.Fatalf("Connectivity Check Failed: %v", err)
 	}
 
 	ui.Success("Connectivity Check: OK")
 	fmt.Printf("%s\n", result)
-
 }
+
+func handleAction(resp *ai.Response, aiClient *ai.Client, userAsk string) {
+	switch resp.Action {
+	case "QUERY":
+		ui.Box("Action Proposed", fmt.Sprintf("Type: QUERY\nPayload: %s", resp.Payload))
+
+		pClient, _ := monitor.NewClient("http://localhost:9090")
+		val, err := pClient.Query(context.Background(), resp.Payload, time.Now())
+		if err != nil {
+			ui.Error("Execution failed: %v", err)
+			return
+		}
+
+		ui.Success("Result: %s", val)
+
+		// Follow-up: Explain the result
+		ui.Info("Analyzing result...")
+		explanation, _ := aiClient.Analyze(context.Background(), ai.Request{
+			UserPrompt: fmt.Sprintf("The query result was: %s. Explain this briefly to the user who asked: %s", val, userAsk),
+			Context:    "Evaluation Phase",
+		})
+
+		if explanation != nil {
+			ui.Box("Aegis Analysis", explanation.Payload)
+		}
+
+	case "EXPLAIN", "FIX":
+		ui.Box("Aegis Explanation", resp.Payload)
+	default:
+		ui.Error("Unknown action: %s", resp.Action)
+	}
+}
+
 func logAction(action, payload string) {
 	f, err := os.OpenFile("data/audit.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		log.Println("Failed to open audit log:", err)
 		return
 	}
 	defer f.Close()
-
-	entry := fmt.Sprintf("[%s] Action: %s | Payload: %s\n", time.Now().Format(time.RFC3339), action, payload)
-	if _, err := f.WriteString(entry); err != nil {
-		log.Println("Failed to write to edit log", err)
-	}
+	fmt.Fprintf(f, "[%s] Action: %s | Payload: %s\n", time.Now().Format(time.RFC3339), action, payload)
 }
