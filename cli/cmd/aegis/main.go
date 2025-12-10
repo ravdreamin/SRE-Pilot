@@ -27,7 +27,7 @@ func main() {
 	ask := flag.String("ask", "", "Ask Aegis a question")
 	flag.Parse()
 
-	ui.Header("AEGIS SRE COPILOT (Qwen Edition)")
+	ui.Header("Aegis | SRE-PILOT ")
 
 	if *dryRun {
 		ui.Warning("Running in DRY-RUN mode")
@@ -52,9 +52,8 @@ func main() {
 		log.Fatal("Failed to initialize AI client: ", err)
 	}
 
-	// --- INTERACTIVE MODE ---
 	if *ask != "" {
-		ui.Info("Thinking (Qwen 2.5)...")
+		ui.Info("Thinking ...")
 		resp, err := aiClient.Analyze(context.Background(), ai.Request{
 			UserPrompt: *ask,
 			Context:    "Interactive CLI",
@@ -64,7 +63,6 @@ func main() {
 			log.Fatal("Failed to get response: ", err)
 		}
 
-		// Update stats (just for local tracking)
 		config.QueryCount++
 		billing.SaveConfig(config)
 
@@ -74,7 +72,6 @@ func main() {
 		return
 	}
 
-	// --- WATCHTOWER / SERVER MODE ---
 	ui.Info("Initializing Components...")
 
 	promClient, err := monitor.NewClient("http://localhost:9090")
@@ -85,17 +82,14 @@ func main() {
 	if *watch {
 		ui.Header("WATCHTOWER MODE ACTIVE")
 
-		// Start API Server
 		srv := server.NewServer(aiClient, promClient)
 		go srv.Start(":8080")
 
-		// Start Background Monitor
 		engine := watchtower.NewEngine(promClient)
 		engine.Run(context.Background())
 		return
 	}
 
-	// Default Connectivity Check
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -122,7 +116,6 @@ func handleAction(resp *ai.Response, aiClient *ai.Client, userAsk string) {
 
 		ui.Success("Result: %s", val)
 
-		// Follow-up: Explain the result
 		ui.Info("Analyzing result...")
 		explanation, _ := aiClient.Analyze(context.Background(), ai.Request{
 			UserPrompt: fmt.Sprintf("The query result was: %s. Explain this briefly to the user who asked: %s", val, userAsk),

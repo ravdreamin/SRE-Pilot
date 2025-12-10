@@ -35,10 +35,8 @@ func (s *Server) Start(addr string) {
 		w.Write([]byte("OK"))
 	})
 
-	// Prometheus Metrics
 	mux.Handle("/metrics", promhttp.Handler())
 
-	// Chat API
 	mux.HandleFunc("/api/chat", s.handleChat)
 
 	log.Printf("🔭 Observability Server started on %s", addr)

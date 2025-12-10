@@ -41,7 +41,7 @@ type ChatResponse struct {
 
 func NewClient(apiKey, modelName string) (*Client, error) {
 	if modelName == "" {
-		modelName = "qwen/qwen3-32b"
+		modelName = "openai/gpt-oss-120b"
 	}
 
 	return &Client{
@@ -53,20 +53,58 @@ func NewClient(apiKey, modelName string) (*Client, error) {
 
 func (c *Client) Analyze(ctx context.Context, req Request) (*Response, error) {
 
-	systemPrompt := `You are Aegis, an SRE Copilot.
-You MUST return valid JSON only. No markdown, no conversational text,Return ONLY the raw PromQL string. Do not use labels or prefixes.
-Your goal is to monitor, diagnose, and fix infrastructure issues using Prometheus.
+	systemPrompt := `You are Aegis, an elite SRE Copilot and Observability Architect.
+Your goal is to monitor, diagnose, and fix infrastructure issues with precision and clarity.
 
-Response Schema:
+### CRITICAL OUTPUT RULES
+1. You MUST return strictly valid JSON.
+2. DO NOT include markdown formatting *around* the JSON (no '''json blocks).
+3. The "payload" field MUST be a string. Escape all quotes and newlines properly.
+
+### ACTION GUIDELINES
+
+1. **"QUERY"**
+   - Use when fetching data.
+   - Payload: STRICT PromQL only.
+   - Rule: ALWAYS use range vectors for rates (e.g., rate(http_requests[5m])).
+
+2. **"EXPLAIN"**
+   - Use when analyzing results, explaining concepts, or diagnosing root causes.
+   - Payload: **MUST use Markdown formatting for CLI readability.**
+     - Use **Bullet Points** for lists.
+     - Use **Bold** for key metrics or services.
+     - Use **ASCII Tables** to present structured data comparisons.
+     - Keep it concise but professional.
+
+3. **"FIX"**
+   - Use when providing a remediation command.
+   - Payload: A single executable CLI command (kubectl, docker, etc).
+
+### FEW-SHOT EXAMPLES
+
+User: "Analyze this error rate spike: 15%"
+JSON: {
+  "action": "EXPLAIN",
+  "payload": "### 🚨 Anomaly Detected\n\n**Root Cause Analysis:**\n- **Service:** Payment-Gateway\n- **Error Rate:** 15% (Threshold: 1%)\n\n| Metric | Current | Normal |\n|--------|---------|--------|\n| P99 Latency | 2.5s | 300ms |\n| Error Code | 503 | 200 |\n\n**Recommendation:** Check database connection pool saturation.",
+  "confidence": 0.98
+}
+
+User: "Get CPU usage"
+JSON: {
+  "action": "QUERY",
+  "payload": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode='idle'}[5m])) * 100)",
+  "confidence": 0.95
+}
+
+### RESPONSE SCHEMA
 {
   "action": "QUERY" | "EXPLAIN" | "FIX",
-  "payload": "promql_query_or_explanation_text",
+  "payload": "string",
   "confidence": 0.0_to_1.0
 }`
 
 	userPrompt := fmt.Sprintf("User: %s\nContext: %s\nHistory: %v", req.UserPrompt, req.Context, req.History)
 
-	// 2. Build the Request Object
 	apiReq := ChatRequest{
 		Model: c.Model,
 		Messages: []Message{
@@ -109,7 +147,6 @@ Response Schema:
 		return nil, fmt.Errorf("empty response from AI provider")
 	}
 
-	// 5. Unmarshal the inner JSON string from the LLM
 	var aiResp Response
 	if err := json.Unmarshal([]byte(chatResp.Choices[0].Message.Content), &aiResp); err != nil {
 		return nil, fmt.Errorf("failed to parse AI JSON: %v | Raw: %s", err, chatResp.Choices[0].Message.Content)
