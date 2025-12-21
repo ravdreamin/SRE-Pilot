@@ -83,11 +83,16 @@ func main() {
 		ui.Header("WATCHTOWER MODE ACTIVE")
 
 		srv := server.NewServer(aiClient, promClient)
-		go srv.Start(":8080")
+		go func() {
+			if err := srv.Start(":8080"); err != nil {
+				log.Fatalf("Server Crashed: %v", err)
+			}
+		}()
 
 		engine := watchtower.NewEngine(promClient)
-		engine.Run(context.Background())
-		return
+		go engine.Run(context.Background())
+		ui.Success("Aegis is watching... (Press Ctrl+C to stop)")
+		select {}
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

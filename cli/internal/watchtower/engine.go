@@ -17,7 +17,7 @@ type Engine struct {
 func NewEngine(client monitor.Client) *Engine {
 	return &Engine{
 		Client: client,
-		Ticker: time.NewTicker(30 * time.Second),
+		Ticker: time.NewTicker(20 * time.Second),
 	}
 }
 

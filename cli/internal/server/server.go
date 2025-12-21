@@ -25,7 +25,7 @@ func NewServer(aiClient *ai.Client, monitorClient monitor.Client) *Server {
 }
 
 // Start launches the observability server in a blocking manner
-func (s *Server) Start(addr string) {
+func (s *Server) Start(addr string) error {
 	mux := http.NewServeMux()
 
 	// Liveness Probe
@@ -38,11 +38,43 @@ func (s *Server) Start(addr string) {
 	mux.Handle("/metrics", promhttp.Handler())
 
 	mux.HandleFunc("/api/chat", s.handleChat)
+	mux.HandleFunc("/api/metrics", s.handleMetrics)
 
 	log.Printf("🔭 Observability Server started on %s", addr)
-	if err := http.ListenAndServe(addr, mux); err != nil {
-		log.Fatalf("Server failed: %v", err)
+	return http.ListenAndServe(addr, mux)
+}
+
+func (s *Server) handleMetrics(w http.ResponseWriter, r *http.Request) {
+	enableCors(w)
+	if r.Method == "OPTIONS" {
+		return
 	}
+
+	ctx := r.Context()
+	result := map[string]interface{}{
+		"timestamp": time.Now().Unix(),
+	}
+
+	// Query CPU usage
+	cpuQuery := `100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)`
+	if cpuVal, err := s.Monitor.Query(ctx, cpuQuery, time.Now()); err == nil {
+		result["cpu"] = cpuVal.String()
+	}
+
+	// Query Memory usage
+	memQuery := `(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100`
+	if memVal, err := s.Monitor.Query(ctx, memQuery, time.Now()); err == nil {
+		result["memory"] = memVal.String()
+	}
+
+	// Query Disk usage
+	diskQuery := `(1 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})) * 100`
+	if diskVal, err := s.Monitor.Query(ctx, diskQuery, time.Now()); err == nil {
+		result["disk"] = diskVal.String()
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
 }
 
 func (s *Server) handleChat(w http.ResponseWriter, r *http.Request) {

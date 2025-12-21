@@ -1,0 +1,36 @@
+// src/App.jsx
+import React, { useState, useMemo } from "react";
+import { ThemeProvider, CssBaseline } from "@mui/material";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { createAppTheme } from "./theme";
+import Layout from "./components/Layout";
+import Hero from "./pages/Hero";
+import Documentation from "./pages/Documentation";
+import Console from "./pages/Console";
+
+function App() {
+  const [mode, setMode] = useState("light");
+
+  const theme = useMemo(() => createAppTheme(mode), [mode]);
+
+  const toggleColorMode = () => {
+    setMode((prevMode) => (prevMode === "dark" ? "light" : "dark"));
+  };
+
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <BrowserRouter>
+        <Layout toggleColorMode={toggleColorMode} mode={mode}>
+          <Routes>
+            <Route path="/" element={<Hero />} />
+            <Route path="/docs" element={<Documentation />} />
+            <Route path="/console" element={<Console />} />
+          </Routes>
+        </Layout>
+      </BrowserRouter>
+    </ThemeProvider>
+  );
+}
+
+export default App;

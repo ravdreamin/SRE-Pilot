@@ -125,3 +125,14 @@ These steps will help bring CPU usage down.
 [2025-12-10T17:17:58+05:30] Action: QUERY | Payload: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode='idle'}[5m])) * 100)
 [2025-12-10T17:18:09+05:30] Action: QUERY | Payload: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode='idle'}[5m])) * 100) or ((node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100)
 [2025-12-10T17:38:28+05:30] Action: QUERY | Payload: 100 * (1 - avg by (instance) (node_memory_MemAvailable_bytes) / avg by (instance) (node_memory_MemTotal_bytes))
+[2025-12-21T00:09:30+05:30] Action: QUERY | Payload: 100 * (1 - avg by (instance) (node_memory_MemAvailable_bytes) / avg by (instance) (node_memory_MemTotal_bytes))
+[2025-12-21T00:09:45+05:30] Action: QUERY | Payload: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)
+[2025-12-21T00:09:59+05:30] Action: QUERY | Payload: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode='idle'}[5m])) * 100)
+[2025-12-21T00:11:15+05:30] Action: QUERY | Payload: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode='idle'}[5m])) * 100)
+[2025-12-21T00:11:35+05:30] Action: QUERY | Payload: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100
+[2025-12-21T00:13:51+05:30] Action: QUERY | Payload: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100
+[2025-12-21T00:14:07+05:30] Action: QUERY | Payload: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode='idle'}[5m])) * 100)
+[2025-12-21T00:17:24+05:30] Action: QUERY | Payload: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+[2025-12-21T00:17:40+05:30] Action: QUERY | Payload: 100 - (avg by (instance) (node_memory_MemAvailable_bytes{job='node'} / node_memory_MemTotal_bytes{job='node'} * 100))
+[2025-12-21T00:22:52+05:30] Action: QUERY | Payload: 100 * (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes))
+[2025-12-21T00:23:10+05:30] Action: QUERY | Payload: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode='idle'}[5m])) * 100)
