@@ -9,11 +9,10 @@
   text-rendering: optimizeLegibility;
 }
 
+
 html {
   scroll-behavior: smooth;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background-color: #F5F5F7;
-  /* Light Mode Background */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -22,7 +21,6 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background-color: #000000;
   overflow-x: hidden;
 }
 

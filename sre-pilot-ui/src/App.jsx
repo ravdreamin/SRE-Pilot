@@ -4,6 +4,7 @@ import { ThemeProvider, CssBaseline } from "@mui/material";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { createAppTheme } from "./theme";
 import Layout from "./components/Layout";
+import ScrollHandler from "./components/ScrollHandler";
 import Hero from "./pages/Hero";
 import Documentation from "./pages/Documentation";
 import Console from "./pages/Console";
@@ -21,6 +22,7 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <BrowserRouter>
+        <ScrollHandler />
         <Layout toggleColorMode={toggleColorMode} mode={mode}>
           <Routes>
             <Route path="/" element={<Hero />} />

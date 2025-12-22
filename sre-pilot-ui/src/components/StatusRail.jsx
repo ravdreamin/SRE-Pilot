@@ -40,7 +40,7 @@ const StatusRail = () => {
                     x: {
                         repeat: Infinity,
                         repeatType: "loop",
-                        duration: 30, // Adjust for speed
+                        duration: 60, // Adjust for speed
                         ease: "linear",
                     },
                 }}

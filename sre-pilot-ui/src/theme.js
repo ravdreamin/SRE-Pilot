@@ -7,14 +7,14 @@ const FONT_FAMILY =
 export const createAppTheme = (mode) =>
   createTheme({
     palette: {
-      mode: "light", // Strict Light Mode
+      mode,
       background: {
-        default: "#F5F5F7", // Apple Light Grey
-        paper: "#FFFFFF",
+        default: mode === 'light' ? "#F5F5F7" : "#000000",
+        paper: mode === 'light' ? "#FFFFFF" : "#1C1C1E",
       },
       text: {
-        primary: "#1D1D1F",
-        secondary: "#86868B",
+        primary: mode === 'light' ? "#1D1D1F" : "#F5F5F7",
+        secondary: mode === 'light' ? "#86868B" : "#A1A1A6",
       },
       primary: {
         main: "#007AFF", // Apple Blue

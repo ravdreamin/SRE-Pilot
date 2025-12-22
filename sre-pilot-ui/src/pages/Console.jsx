@@ -1,237 +1,24 @@
-// src/pages/Console.jsx
 import React, { useState, useEffect, useRef } from "react";
-import { Box, Typography, TextField, IconButton, Avatar, Stack, Chip, Tabs, Tab } from "@mui/material";
+import { Box, Typography, TextField, IconButton, Stack, Chip, Tabs, Tab } from "@mui/material";
 import { motion, AnimatePresence } from "framer-motion";
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from 'recharts';
 import axios from 'axios';
 
 // Icons
 import SendIcon from '@mui/icons-material/Send';
-import PersonIcon from '@mui/icons-material/Person';
 import SpeedIcon from '@mui/icons-material/Speed';
 import MemoryIcon from '@mui/icons-material/Memory';
 import StorageIcon from '@mui/icons-material/Storage';
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import TerminalIcon from '@mui/icons-material/Terminal';
+
+// Components
+import { AegisLogo } from "../components/common/AegisLogo";
+import { CommandBlock } from "../components/console/CommandBlock";
+import { MetricCard, LogEntry } from "../components/console/DashboardWidgets";
+import { ConsoleGridBackground } from "../components/console/ConsoleEffects";
 
 const API_URL = 'http://localhost:8080';
 
-// --- Animated Aegis Logo ---
-const AegisLogo = ({ size = 32, animated = true }) => (
-  <motion.div
-    initial={{ scale: 0.8, opacity: 0 }}
-    animate={{ scale: 1, opacity: 1 }}
-    transition={{ duration: 0.5, ease: "easeOut" }}
-    style={{ width: size, height: size, position: 'relative' }}
-  >
-    <svg viewBox="0 0 100 100" width={size} height={size}>
-      <defs>
-        <linearGradient id="aegisGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#087EA4" />
-          <stop offset="100%" stopColor="#06b6d4" />
-        </linearGradient>
-        <filter id="glow">
-          <feGaussianBlur stdDeviation="2" result="coloredBlur" />
-          <feMerge>
-            <feMergeNode in="coloredBlur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-      </defs>
-
-      {/* Outer Ring */}
-      <motion.circle
-        cx="50" cy="50" r="45"
-        fill="none"
-        stroke="url(#aegisGradient)"
-        strokeWidth="2"
-        strokeDasharray="283"
-        initial={{ strokeDashoffset: 283 }}
-        animate={{ strokeDashoffset: animated ? [283, 0] : 0 }}
-        transition={{ duration: 1.5, ease: "easeInOut" }}
-      />
-
-      {/* Inner Shield */}
-      <motion.path
-        d="M50 20 L75 35 L75 55 Q75 75 50 85 Q25 75 25 55 L25 35 Z"
-        fill="url(#aegisGradient)"
-        filter="url(#glow)"
-        initial={{ scale: 0.5, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.8, delay: 0.3 }}
-        style={{ transformOrigin: 'center' }}
-      />
-
-      {/* Center A */}
-      <motion.text
-        x="50" y="58"
-        textAnchor="middle"
-        fill="#fff"
-        fontSize="28"
-        fontWeight="700"
-        fontFamily="system-ui"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.8 }}
-      >
-        A
-      </motion.text>
-
-      {/* Pulse Ring */}
-      {animated && (
-        <motion.circle
-          cx="50" cy="50" r="45"
-          fill="none"
-          stroke="#087EA4"
-          strokeWidth="1"
-          initial={{ scale: 1, opacity: 0.5 }}
-          animate={{ scale: [1, 1.2], opacity: [0.5, 0] }}
-          transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }}
-          style={{ transformOrigin: 'center' }}
-        />
-      )}
-    </svg>
-  </motion.div>
-);
-
-// --- Message Component ---
-const MessageBubble = ({ role, content, error }) => {
-  const isUser = role === 'user';
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 12, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
-      style={{ display: 'flex', justifyContent: isUser ? 'flex-end' : 'flex-start', marginBottom: 20 }}
-    >
-      <Box sx={{ display: 'flex', flexDirection: isUser ? 'row-reverse' : 'row', gap: 1.5, maxWidth: '90%' }}>
-        <motion.div whileHover={{ scale: 1.05 }} transition={{ duration: 0.2 }}>
-          <Avatar sx={{
-            width: 32, height: 32,
-            bgcolor: error ? '#fee2e2' : isUser ? '#111' : 'transparent',
-            color: error ? '#dc2626' : isUser ? '#fff' : '#111',
-            border: isUser ? 'none' : 'none',
-            flexShrink: 0
-          }}>
-            {error ? <ErrorOutlineIcon sx={{ fontSize: 16 }} /> :
-              isUser ? <PersonIcon sx={{ fontSize: 16 }} /> : <AegisLogo size={32} animated={false} />}
-          </Avatar>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3, delay: 0.1 }}
-        >
-          <Box sx={{
-            bgcolor: error ? '#fef2f2' : isUser ? '#111' : '#f8f9fa',
-            color: error ? '#991b1b' : isUser ? '#fff' : '#111',
-            px: 2.5, py: 2,
-            borderRadius: '16px',
-            borderTopLeftRadius: isUser ? '16px' : '4px',
-            borderTopRightRadius: isUser ? '4px' : '16px',
-            fontSize: '0.9rem',
-            lineHeight: 1.7,
-            border: error ? '1px solid #fecaca' : isUser ? 'none' : '1px solid #eee',
-            boxShadow: isUser ? '0 2px 8px rgba(0,0,0,0.15)' : '0 1px 3px rgba(0,0,0,0.05)',
-            '& p': { m: 0, mb: 1 },
-            '& p:last-child': { mb: 0 },
-            '& h3': { fontSize: '1rem', fontWeight: 600, mt: 0, mb: 1 },
-            '& strong': { fontWeight: 600 },
-            '& code': { fontFamily: '"SF Mono", Menlo, monospace', fontSize: '0.85em', bgcolor: isUser ? 'rgba(255,255,255,0.15)' : '#e9ecef', px: 0.6, py: 0.2, borderRadius: '4px' },
-            '& table': { width: '100%', borderCollapse: 'collapse', my: 2, fontSize: '0.85rem', border: '1px solid #e5e5e5', borderRadius: '8px', overflow: 'hidden' },
-            '& th': { bgcolor: '#f8f9fa', py: 1.5, px: 2, textAlign: 'left', fontWeight: 600, borderBottom: '1px solid #e5e5e5', color: '#555' },
-            '& td': { py: 1.5, px: 2, borderBottom: '1px solid #f0f0f0' }
-          }}>
-            {isUser ? content : (
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                components={{
-                  code({ node, inline, className, children, ...props }) {
-                    const match = /language-(\w+)/.exec(className || '');
-                    const codeString = String(children).replace(/\n$/, '');
-                    if (!inline && (match || codeString.includes('\n'))) {
-                      return (
-                        <SyntaxHighlighter style={oneDark} language={match ? match[1] : 'bash'} PreTag="div"
-                          customStyle={{ margin: '12px 0', borderRadius: '8px', fontSize: '0.85rem', padding: '16px' }} {...props}>
-                          {codeString}
-                        </SyntaxHighlighter>
-                      );
-                    }
-                    return <code {...props}>{children}</code>;
-                  }
-                }}
-              >
-                {content}
-              </ReactMarkdown>
-            )}
-          </Box>
-        </motion.div>
-      </Box>
-    </motion.div>
-  );
-};
-
-// --- Metric Card ---
-const MetricCard = ({ icon: Icon, label, value, unit, color, loading }) => (
-  <motion.div whileHover={{ scale: 1.02, y: -2 }} transition={{ duration: 0.2 }}>
-    <Box sx={{
-      p: 2,
-      bgcolor: '#fff',
-      borderRadius: '12px',
-      border: '1px solid #eee',
-      display: 'flex',
-      alignItems: 'center',
-      gap: 1.5,
-      boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-      transition: 'box-shadow 0.2s',
-      '&:hover': { boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }
-    }}>
-      <motion.div
-        animate={{ rotate: loading ? 360 : 0 }}
-        transition={{ duration: 2, repeat: loading ? Infinity : 0, ease: "linear" }}
-      >
-        <Box sx={{ p: 1.5, borderRadius: '10px', bgcolor: `${color}12`, color }}>
-          <Icon sx={{ fontSize: 20 }} />
-        </Box>
-      </motion.div>
-      <Box>
-        <Typography sx={{ fontSize: '0.7rem', color: '#888', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em' }}>{label}</Typography>
-        <Typography sx={{ fontSize: '1.25rem', fontWeight: 700, color: loading ? '#ccc' : '#111' }}>
-          {loading ? '—' : value}<span style={{ fontSize: '0.7rem', color: '#888', marginLeft: 3 }}>{unit}</span>
-        </Typography>
-      </Box>
-    </Box>
-  </motion.div>
-);
-
-// --- Log Entry ---
-const LogEntry = ({ time, level, msg }) => (
-  <motion.div
-    initial={{ opacity: 0, x: -10 }}
-    animate={{ opacity: 1, x: 0 }}
-    transition={{ duration: 0.2 }}
-  >
-    <Box sx={{ display: 'flex', gap: 1.5, py: 1.5, borderBottom: '1px solid #f5f5f5', fontFamily: '"SF Mono", Menlo, monospace', fontSize: '0.7rem' }}>
-      <span style={{ color: '#aaa', minWidth: 65 }}>{time}</span>
-      <span style={{
-        color: level === 'INFO' ? '#10b981' : level === 'WARN' ? '#f59e0b' : '#ef4444',
-        fontWeight: 700,
-        minWidth: 36,
-        padding: '1px 6px',
-        borderRadius: '4px',
-        backgroundColor: level === 'INFO' ? '#ecfdf5' : level === 'WARN' ? '#fffbeb' : '#fef2f2'
-      }}>{level}</span>
-      <span style={{ color: '#444', wordBreak: 'break-word' }}>{msg}</span>
-    </Box>
-  </motion.div>
-);
-
-// --- Main Component ---
 const Console = () => {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -261,12 +48,12 @@ const Console = () => {
     axios.get(`${API_URL}/health`, { timeout: 3000 })
       .then(() => {
         setConnected(true);
-        setMessages([{ id: 1, role: 'agent', content: `**Aegis Console** is ready.\n\nI'm connected to the CLI backend. Ask me anything about your infrastructure, or try:\n\n- "Show system status"\n- "List pods"\n- "Run diagnostics"` }]);
+        setMessages([{ id: 1, role: 'agent', content: `**System Ready**\n\nConnected to local daemon. Waiting for input.` }]);
         addLog(setActivityLogs, 'INFO', 'Connected to Aegis CLI');
       })
       .catch(() => {
         setConnected(false);
-        setMessages([{ id: 1, role: 'agent', content: `**Aegis Console** (Demo Mode)\n\nBackend not available. Using simulated data.\n\nTo connect:\n\`\`\`bash\ncd cli && go run ./cmd/aegis --watch\n\`\`\``, error: false }]);
+        setMessages([{ id: 1, role: 'agent', content: `**Demo Mode Active**\n\nCannot reach local daemon at ${API_URL}. Using simulated data environment.`, error: false }]);
         addLog(setActivityLogs, 'WARN', 'Running in demo mode');
       });
   }, []);
@@ -335,9 +122,9 @@ const Console = () => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, isTyping]);
 
-  const handleSend = async () => {
-    if (!input.trim() || isTyping) return;
-    const userMessage = input.trim();
+  const handleSend = async (text = input) => {
+    if (!text.trim() || isTyping) return;
+    const userMessage = text.trim();
     setMessages(prev => [...prev, { id: Date.now(), role: 'user', content: userMessage }]);
     setInput('');
     setIsTyping(true);
@@ -386,99 +173,121 @@ const Console = () => {
     }
   };
 
+  const QUICK_ACTIONS = ["System Status", "Check Pods", "Analyze Logs"];
+
   return (
     <Box sx={{ position: 'fixed', top: 64, left: 0, right: 0, bottom: 0, bgcolor: '#f8f9fb', display: 'flex', overflow: 'hidden' }}>
 
       {/* CHAT AREA */}
-      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', bgcolor: '#fff', borderRight: '1px solid #eaeaea' }}>
+      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', bgcolor: '#fff', borderRight: '1px solid #eaeaea', position: 'relative' }}>
+        <ConsoleGridBackground />
+
         {/* Header */}
-        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-          <Box sx={{ px: 4, py: 2.5, borderBottom: '1px solid #eaeaea', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Stack direction="row" alignItems="center" spacing={2}>
-              <AegisLogo size={36} />
-              <Box>
-                <Typography sx={{ fontWeight: 700, color: '#111', fontSize: '1.1rem', letterSpacing: '-0.02em' }}>Aegis Console</Typography>
-                <Typography sx={{ fontSize: '0.75rem', color: '#888' }}>AI-Powered SRE Assistant</Typography>
-              </Box>
-            </Stack>
-            <motion.div whileHover={{ scale: 1.05 }}>
-              <Chip
-                label={connected ? 'Connected' : 'Demo Mode'}
-                size="small"
-                sx={{
-                  bgcolor: connected ? '#dcfce7' : '#fef3c7',
-                  color: connected ? '#166534' : '#92400e',
-                  fontWeight: 600,
-                  fontSize: '0.75rem',
-                  height: 26,
-                  border: connected ? '1px solid #bbf7d0' : '1px solid #fde68a'
-                }}
-              />
-            </motion.div>
-          </Box>
-        </motion.div>
+        <Box sx={{
+          px: 4, py: 1.5,
+          borderBottom: '1px solid #eaeaea',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          bgcolor: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(10px)', zIndex: 10
+        }}>
+          <Stack direction="row" alignItems="center" spacing={1.5}>
+            <TerminalIcon sx={{ color: '#087EA4', fontSize: 20 }} />
+            <Typography sx={{ fontWeight: 600, color: '#111', fontSize: '0.9rem', fontFamily: 'Inter, sans-serif' }}>
+              Terminal Session
+            </Typography>
+            <Chip
+              label={connected ? "ONLINE" : "OFFLINE"}
+              size="small"
+              sx={{
+                height: 20,
+                fontSize: '0.65rem',
+                fontWeight: 700,
+                bgcolor: connected ? '#dcfce7' : '#fee2e2',
+                color: connected ? '#166534' : '#991b1b',
+                borderRadius: '4px'
+              }}
+            />
+          </Stack>
+          <Typography sx={{ fontSize: '0.75rem', color: '#888', fontFamily: 'monospace' }}>
+            v1.0.4 stable
+          </Typography>
+        </Box>
+
+        {/* Input Area (Moved to Top or High importance? No, Terminal style usually has input at bottom, but let's make it distinctive) */}
 
         {/* Messages */}
-        <Box ref={scrollRef} sx={{ flex: 1, overflowY: 'auto', px: 4, py: 4 }}>
+        <Box ref={scrollRef} sx={{ flex: 1, overflowY: 'auto', px: 4, py: 2, position: 'relative', zIndex: 1 }}>
           <AnimatePresence>
-            {messages.map(msg => <MessageBubble key={msg.id} role={msg.role} content={msg.content} error={msg.error} />)}
+            {messages.map(msg => <CommandBlock key={msg.id} role={msg.role} content={msg.content} error={msg.error} />)}
           </AnimatePresence>
 
           {isTyping && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              style={{ display: 'flex', gap: 12, marginBottom: 16 }}
-            >
-              <AegisLogo size={32} animated={false} />
-              <Box sx={{ bgcolor: '#f8f9fa', px: 3, py: 2, borderRadius: '16px', borderTopLeftRadius: '4px', display: 'flex', gap: 1, border: '1px solid #eee' }}>
-                {[0, 0.15, 0.3].map((d, i) => (
-                  <motion.span key={i} animate={{ scale: [1, 1.3, 1], opacity: [0.4, 1, 0.4] }} transition={{ duration: 0.8, repeat: Infinity, delay: d }}
-                    style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#087EA4' }} />
-                ))}
-              </Box>
-            </motion.div>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, my: 2, ml: 1, opacity: 0.6 }}>
+              <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#087EA4', animation: 'pulse 1s infinite' }} />
+              <Typography sx={{ fontSize: '0.8rem', fontFamily: 'monospace', color: '#087EA4' }}>Processing...</Typography>
+            </Box>
           )}
         </Box>
 
-        {/* Input */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.2 }}>
-          <Box sx={{ px: 4, py: 3, borderTop: '1px solid #eaeaea', bgcolor: '#fafafa' }}>
-            <Box sx={{
-              display: 'flex',
-              gap: 2,
-              bgcolor: '#fff',
-              border: '1px solid #e5e5e5',
-              borderRadius: '14px',
-              px: 3,
-              py: 1.5,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-              transition: 'all 0.2s',
-              '&:focus-within': { borderColor: '#087EA4', boxShadow: '0 0 0 3px rgba(8,126,164,0.1)' }
-            }}>
-              <TextField
-                fullWidth variant="standard" placeholder="Ask Aegis anything..."
-                value={input} onChange={e => setInput(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleSend()}
+        {/* Command Input Area */}
+        <Box sx={{ p: 0, borderTop: '1px solid #eaeaea', bgcolor: '#fff', zIndex: 10 }}>
+          {/* Toolbar */}
+          <Box sx={{ px: 4, py: 1, borderBottom: '1px solid #f5f5f5', display: 'flex', gap: 1 }}>
+            {QUICK_ACTIONS.map((action) => (
+              <Chip
+                key={action}
+                label={action}
+                onClick={() => handleSend(action)}
                 disabled={isTyping}
-                InputProps={{ disableUnderline: true, sx: { fontSize: '0.95rem' } }}
+                size="small"
+                variant="outlined"
+                sx={{
+                  borderRadius: '4px',
+                  borderColor: '#e5e5e5',
+                  color: '#666',
+                  fontWeight: 500,
+                  fontSize: '0.75rem',
+                  height: 24,
+                  cursor: 'pointer',
+                  '&:hover': { bgcolor: '#f5f5f5', borderColor: '#d1d1d1', color: '#111' },
+                }}
               />
-              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
-                <IconButton onClick={handleSend} disabled={!input.trim() || isTyping}
-                  sx={{
-                    bgcolor: input.trim() ? '#087EA4' : '#f5f5f5',
-                    color: input.trim() ? '#fff' : '#aaa',
-                    width: 40,
-                    height: 40,
-                    transition: 'all 0.2s',
-                    '&:hover': { bgcolor: input.trim() ? '#066a8a' : '#f5f5f5' }
-                  }}>
-                  <SendIcon sx={{ fontSize: 18 }} />
-                </IconButton>
-              </motion.div>
-            </Box>
+            ))}
           </Box>
-        </motion.div>
+
+          <Box sx={{ px: 4, py: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Typography sx={{ color: '#087EA4', fontWeight: 700, fontFamily: 'monospace', userSelect: 'none' }}>❯</Typography>
+            <TextField
+              fullWidth
+              variant="standard"
+              placeholder="Enter command or query..."
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleSend()}
+              disabled={isTyping}
+              InputProps={{
+                disableUnderline: true,
+                sx: {
+                  fontSize: '0.95rem',
+                  fontFamily: '"SF Mono", monospace',
+                  fontWeight: 500,
+                  color: '#1D1D1F'
+                }
+              }}
+            />
+            <IconButton
+              onClick={() => handleSend()}
+              disabled={!input.trim() || isTyping}
+              size="small"
+              sx={{
+                color: input.trim() ? '#087EA4' : '#ccc',
+                bgcolor: input.trim() ? 'rgba(8,126,164,0.1)' : 'transparent',
+                '&:hover': { bgcolor: input.trim() ? 'rgba(8,126,164,0.2)' : 'transparent' }
+              }}
+            >
+              <SendIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Box>
+        </Box>
       </Box>
 
       {/* RIGHT SIDEBAR */}

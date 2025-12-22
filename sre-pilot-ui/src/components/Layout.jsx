@@ -49,7 +49,7 @@ const Layout = ({ children }) => {
 
             {/* Center: Navigation Links */}
             <Box sx={{ display: { xs: "none", md: "flex" }, gap: 4 }}>
-              {[{ label: "Overview", path: "/" }, { label: "Features", path: "/#features" }, { label: "Documentation", path: "/docs" }, { label: "Console", path: "/console" }].map((item) => {
+              {[{ label: "Features", path: "/#features" }, { label: "Documentation", path: "/docs" }, { label: "Console", path: "/console" }, { label: "Contact", path: "/#contact" }].map((item) => {
                 const isActive = location.pathname === item.path;
                 return (
                   <Link
