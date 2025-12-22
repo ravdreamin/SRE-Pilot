@@ -66,14 +66,14 @@ const Hero = () => {
 
             {/* CTA Buttons */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.6 }}>
-              <Box sx={{ display: "flex", gap: 2, mt: 6, justifyContent: "center" }}>
+              <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 2, mt: 6, justifyContent: "center", alignItems: "center" }}>
                 <Button component={Link} to="/console" variant="contained" endIcon={<ArrowForwardIcon />} size="large" sx={{
-                  bgcolor: "#1d1d1f", color: "#fff", borderRadius: 99, px: 4, py: 1.8, fontSize: "1rem", textTransform: "none", fontWeight: 600, boxShadow: "0 4px 14px rgba(0,0,0,0.2)", "&:hover": { bgcolor: "#000", transform: "scale(1.02)" }, transition: "all 0.2s"
+                  bgcolor: "#1d1d1f", color: "#fff", borderRadius: 99, px: 4, py: 1.8, fontSize: "1rem", textTransform: "none", fontWeight: 600, boxShadow: "0 4px 14px rgba(0,0,0,0.2)", "&:hover": { bgcolor: "#000", transform: "scale(1.02)" }, transition: "all 0.2s", width: { xs: "100%", sm: "auto" }
                 }}>
                   Start Monitoring
                 </Button>
                 <Button component={Link} to="/docs" startIcon={<PlayCircleOutlineIcon />} size="large" sx={{
-                  color: "#1d1d1f", bgcolor: "rgba(255,255,255,0.8)", border: "1px solid rgba(0,0,0,0.1)", borderRadius: 99, px: 4, py: 1.8, fontSize: "1rem", textTransform: "none", fontWeight: 600, backdropFilter: "blur(10px)", "&:hover": { bgcolor: "#fff", borderColor: "#000" }
+                  color: "#1d1d1f", bgcolor: "rgba(255,255,255,0.8)", border: "1px solid rgba(0,0,0,0.1)", borderRadius: 99, px: 4, py: 1.8, fontSize: "1rem", textTransform: "none", fontWeight: 600, backdropFilter: "blur(10px)", "&:hover": { bgcolor: "#fff", borderColor: "#000" }, width: { xs: "100%", sm: "auto" }
                 }}>
                   Watch Demo
                 </Button>

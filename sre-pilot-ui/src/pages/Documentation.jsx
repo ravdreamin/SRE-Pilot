@@ -54,7 +54,7 @@ const Documentation = () => {
   return (
     <Box sx={{ bgcolor: "#fff", minHeight: "100vh", pt: { xs: 8, md: 10 } }}>
       <Container maxWidth="xl">
-        <Box sx={{ display: "flex", gap: 8 }}>
+        <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: { xs: 4, md: 8 } }}>
 
           {/* LEFT SIDEBAR (React.dev style) */}
           <Box sx={{ width: 280, flexShrink: 0, display: { xs: "none", md: "block" } }}>

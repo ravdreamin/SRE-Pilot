@@ -186,7 +186,7 @@ const Console = () => {
         <Box sx={{
           px: 4, py: 1.5,
           borderBottom: '1px solid #eaeaea',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between', gap: { xs: 1, sm: 0 },
           bgcolor: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(10px)', zIndex: 10
         }}>
           <Stack direction="row" alignItems="center" spacing={1.5}>
@@ -231,7 +231,7 @@ const Console = () => {
         {/* Command Input Area */}
         <Box sx={{ p: 0, borderTop: '1px solid #eaeaea', bgcolor: '#fff', zIndex: 10 }}>
           {/* Toolbar */}
-          <Box sx={{ px: 4, py: 1, borderBottom: '1px solid #f5f5f5', display: 'flex', gap: 1 }}>
+          <Box sx={{ px: 4, py: 1, borderBottom: '1px solid #f5f5f5', display: 'flex', gap: 1, overflowX: 'auto', '&::-webkit-scrollbar': { display: 'none' } }}>
             {QUICK_ACTIONS.map((action) => (
               <Chip
                 key={action}

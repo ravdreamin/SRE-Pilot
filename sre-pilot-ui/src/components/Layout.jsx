@@ -1,16 +1,24 @@
 // src/components/Layout.jsx
-import React from "react";
-import { Box, Container, AppBar, Toolbar, Typography, Button } from "@mui/material";
+import React, { useState } from "react";
+import { Box, Container, AppBar, Toolbar, Typography, Button, IconButton, Drawer, List, ListItem, ListItemButton, ListItemText, Stack } from "@mui/material";
 import { Link, useLocation } from "react-router-dom";
-import { motion } from "framer-motion";
-import CodeRoundedIcon from '@mui/icons-material/CodeRounded';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import MenuIcon from '@mui/icons-material/Menu';
+import CloseIcon from '@mui/icons-material/Close';
 
 const Layout = ({ children }) => {
   const location = useLocation();
-  // Simple hover state is enough, no need for complex pill animation if we want strict "Enterprise" look, 
-  // but a subtle one is nice. keeping it minimal.
-  const [hoveredPath, setHoveredPath] = React.useState(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const toggleDrawer = (newOpen) => () => {
+    setMobileOpen(newOpen);
+  };
+
+  const navItems = [
+    { label: "Features", path: "/#features" },
+    { label: "Documentation", path: "/docs" },
+    { label: "Console", path: "/console" },
+    { label: "Contact", path: "/#contact" }
+  ];
 
   return (
     <>
@@ -47,9 +55,9 @@ const Layout = ({ children }) => {
               </Box>
             </Link>
 
-            {/* Center: Navigation Links */}
+            {/* Center: Navigation Links (Desktop) */}
             <Box sx={{ display: { xs: "none", md: "flex" }, gap: 4 }}>
-              {[{ label: "Features", path: "/#features" }, { label: "Documentation", path: "/docs" }, { label: "Console", path: "/console" }, { label: "Contact", path: "/#contact" }].map((item) => {
+              {navItems.map((item) => {
                 const isActive = location.pathname === item.path;
                 return (
                   <Link
@@ -74,16 +82,17 @@ const Layout = ({ children }) => {
               })}
             </Box>
 
-            {/* Right Side: Action Pills */}
-            <Box sx={{ display: "flex", gap: 1.5 }}>
+            {/* Right Side: Desktop Action + Mobile Toggle */}
+            <Box sx={{ display: "flex", gap: 1.5, alignItems: 'center' }}>
               <Button
                 component={Link}
                 to="/console"
                 sx={{
+                  display: { xs: "none", md: "flex" },
                   bgcolor: "#1D1D1F",
                   color: "#FFFFFF",
                   textTransform: "none",
-                  borderRadius: "8px", // Slightly squared
+                  borderRadius: "8px",
                   px: 2,
                   py: 0.8,
                   fontSize: "0.85rem",
@@ -94,10 +103,71 @@ const Layout = ({ children }) => {
               >
                 Access Console
               </Button>
+
+              {/* Mobile Menu Icon */}
+              <IconButton
+                color="inherit"
+                aria-label="open drawer"
+                edge="end"
+                onClick={toggleDrawer(true)}
+                sx={{ display: { md: 'none' }, color: '#1D1D1F' }}
+              >
+                <MenuIcon />
+              </IconButton>
             </Box>
           </Toolbar>
         </Container>
       </AppBar>
+
+      {/* Mobile Drawer */}
+      <Drawer
+        anchor="right"
+        open={mobileOpen}
+        onClose={toggleDrawer(false)}
+        PaperProps={{ sx: { width: '100%', maxWidth: 300, bgcolor: "#fff" } }}
+      >
+        <Box sx={{ p: 2, display: 'flex', justifyContent: 'flex-end' }}>
+          <IconButton onClick={toggleDrawer(false)}>
+            <CloseIcon />
+          </IconButton>
+        </Box>
+        <Box sx={{ px: 3, pt: 2, pb: 4 }}>
+          <Typography variant="h5" sx={{ fontWeight: 700, mb: 4, fontFamily: '"Outfit", sans-serif' }}>Menu</Typography>
+          <List>
+            {navItems.map((item) => (
+              <ListItem key={item.label} disablePadding sx={{ mb: 1 }}>
+                <ListItemButton
+                  component={Link} to={item.path}
+                  onClick={toggleDrawer(false)}
+                  sx={{ borderRadius: 2, '&:hover': { bgcolor: '#f5f5f7' } }}
+                >
+                  <ListItemText
+                    primary={item.label}
+                    primaryTypographyProps={{ fontSize: '1.2rem', fontWeight: 500, color: '#1D1D1F' }}
+                  />
+                </ListItemButton>
+              </ListItem>
+            ))}
+          </List>
+          <Box sx={{ mt: 4 }}>
+            <Button
+              fullWidth
+              variant="contained"
+              component={Link} to="/console"
+              onClick={toggleDrawer(false)}
+              sx={{
+                bgcolor: "#1D1D1F",
+                py: 1.5,
+                borderRadius: 3,
+                fontSize: '1rem',
+                textTransform: 'none'
+              }}
+            >
+              Access Console
+            </Button>
+          </Box>
+        </Box>
+      </Drawer>
 
       <Box sx={{ pt: "64px", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
         {children}

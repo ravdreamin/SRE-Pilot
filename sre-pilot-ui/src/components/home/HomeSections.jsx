@@ -165,7 +165,7 @@ export const ContactSection = () => {
                         position: "relative",
                         bgcolor: "#000", // Keep this one black for contrast (Contact Card)
                         borderRadius: "48px",
-                        p: { xs: 6, md: 10 },
+                        p: { xs: 4, md: 10 },
                         minHeight: 500,
                         overflow: "hidden",
                         display: "flex",
@@ -177,7 +177,7 @@ export const ContactSection = () => {
                     }}
                 >
                     {/* Left Content */}
-                    <Box sx={{ position: "relative", zIndex: 1, maxWidth: 500 }}>
+                    <Box sx={{ position: "relative", zIndex: 1, maxWidth: 500, width: "100%" }}>
                         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
                             <Typography variant="h2" sx={{ fontFamily: '"Outfit", sans-serif', fontWeight: 500, color: "#fff", fontSize: { xs: "2.5rem", md: "3.5rem" }, lineHeight: 1.2, mb: 5 }}>
                                 Get in touch with<br />
@@ -185,7 +185,7 @@ export const ContactSection = () => {
                             </Typography>
                         </motion.div>
 
-                        <Box sx={{ display: "flex", gap: 2 }}>
+                        <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 2, width: { xs: "100%", sm: "auto" } }}>
                             <Button variant="contained" startIcon={<GitHubIcon />} href="https://github.com/ravdreamin" target="_blank" sx={{ bgcolor: "#fff", color: "#000", borderRadius: 99, px: 4, py: 1.5, "&:hover": { bgcolor: "#f1f3f4" } }}>
                                 Follow on GitHub
                             </Button>
@@ -198,10 +198,67 @@ export const ContactSection = () => {
                     {/* Right Content */}
                     <Box sx={{ position: "relative", zIndex: 1, width: { xs: "100%", md: 350 } }}>
                         <Typography variant="body1" sx={{ color: "rgba(255,255,255,0.6)", mb: 3 }}>Or send a quick message:</Typography>
-                        <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                            <TextField label="Email Address" variant="filled" fullWidth value={email} onChange={(e) => setEmail(e.target.value)} InputProps={{ disableUnderline: true }} sx={{ bgcolor: "rgba(255,255,255,0.1)", borderRadius: 2, input: { color: "#fff" } }} />
-                            <TextField label="Message" variant="filled" fullWidth multiline rows={4} value={message} onChange={(e) => setMessage(e.target.value)} InputProps={{ disableUnderline: true }} sx={{ bgcolor: "rgba(255,255,255,0.1)", borderRadius: 2, textarea: { color: "#fff" } }} />
-                            <Button variant="contained" fullWidth onClick={handleSend} disabled={!message} sx={{ bgcolor: "#4285f4", borderRadius: 99, py: 1.5 }}>Send</Button>
+                        <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+                            <TextField
+                                label="Email Address"
+                                variant="outlined"
+                                fullWidth
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                sx={{
+                                    "& .MuiOutlinedInput-root": {
+                                        color: "#fff",
+                                        bgcolor: "rgba(255, 255, 255, 0.03)",
+                                        borderRadius: "16px",
+                                        "& fieldset": { borderColor: "rgba(255, 255, 255, 0.15)", transition: "all 0.2s" },
+                                        "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.3)" },
+                                        "&.Mui-focused fieldset": { borderColor: "#4285f4", borderWidth: "1px" },
+                                    },
+                                    "& .MuiInputLabel-root": { color: "rgba(255, 255, 255, 0.5)" },
+                                    "& .MuiInputLabel-root.Mui-focused": { color: "#4285f4" }
+                                }}
+                            />
+                            <TextField
+                                label="Message"
+                                variant="outlined"
+                                fullWidth
+                                multiline
+                                rows={4}
+                                value={message}
+                                onChange={(e) => setMessage(e.target.value)}
+                                sx={{
+                                    "& .MuiOutlinedInput-root": {
+                                        color: "#fff",
+                                        bgcolor: "rgba(255, 255, 255, 0.03)",
+                                        borderRadius: "16px",
+                                        "& fieldset": { borderColor: "rgba(255, 255, 255, 0.15)", transition: "all 0.2s" },
+                                        "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.3)" },
+                                        "&.Mui-focused fieldset": { borderColor: "#4285f4", borderWidth: "1px" },
+                                    },
+                                    "& .MuiInputLabel-root": { color: "rgba(255, 255, 255, 0.5)" },
+                                    "& .MuiInputLabel-root.Mui-focused": { color: "#4285f4" }
+                                }}
+                            />
+                            <Button
+                                variant="contained"
+                                fullWidth
+                                onClick={handleSend}
+                                disabled={!message}
+                                sx={{
+                                    bgcolor: "#4285f4",
+                                    color: "#fff",
+                                    borderRadius: "16px",
+                                    py: 1.8,
+                                    fontSize: "1rem",
+                                    fontWeight: 600,
+                                    textTransform: "none",
+                                    boxShadow: "0 8px 20px -4px rgba(66, 133, 244, 0.4)",
+                                    "&:hover": { bgcolor: "#3367d6", boxShadow: "0 12px 24px -4px rgba(66, 133, 244, 0.6)" },
+                                    "&:disabled": { bgcolor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.3)" }
+                                }}
+                            >
+                                Send Message
+                            </Button>
                         </Box>
                     </Box>
                 </Box>

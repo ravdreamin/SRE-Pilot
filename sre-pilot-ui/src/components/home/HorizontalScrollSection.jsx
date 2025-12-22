@@ -1,10 +1,13 @@
 import React, { useRef } from "react";
-import { Box, Typography, Paper, Chip } from "@mui/material";
+import { Box, Typography, Paper, Chip, useMediaQuery, useTheme } from "@mui/material";
 import { motion, useScroll, useTransform, useSpring } from "framer-motion";
 import { CodeSnippetVisual, LiveGraphVisual, RemediationVisual, IntegrationVisual, ScalingVisual } from "./FeatureVisuals";
 
 export const HorizontalScrollSection = () => {
     const targetRef = useRef(null);
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
     const { scrollYProgress } = useScroll({ target: targetRef, offset: ["start start", "end end"] });
     const smoothProgress = useSpring(scrollYProgress, { stiffness: 100, damping: 30 });
     const x = useTransform(smoothProgress, [0, 1], ["1%", "-75%"]);
@@ -53,22 +56,51 @@ export const HorizontalScrollSection = () => {
     ];
 
     return (
-        <Box id="features" ref={targetRef} sx={{ height: "300vh", position: "relative", bgcolor: "#fff" }}>
-            <Box sx={{ position: "sticky", top: 0, height: "100vh", display: "flex", alignItems: "center", overflow: "hidden", bgcolor: "#fff" }}>
-                <motion.div style={{ x, display: "flex", gap: "40px", paddingLeft: "5vw" }}>
+        <Box id="features" ref={targetRef} sx={{ height: isMobile ? "auto" : "300vh", position: "relative", bgcolor: "#fff", py: isMobile ? 8 : 0 }}>
+            <Box sx={{
+                position: isMobile ? "relative" : "sticky",
+                top: 0,
+                height: isMobile ? "auto" : "100vh",
+                display: "flex",
+                alignItems: "center",
+                overflow: isMobile ? "visible" : "hidden",
+                bgcolor: "#fff",
+                flexDirection: isMobile ? "column" : "row"
+            }}>
+                <motion.div style={{
+                    x: isMobile ? 0 : x,
+                    display: "flex",
+                    gap: "40px",
+                    paddingLeft: isMobile ? 0 : "5vw",
+                    paddingRight: isMobile ? 0 : 0,
+                    paddingBottom: isMobile ? "40px" : 0,
+                    flexDirection: isMobile ? "column" : "row",
+                    width: isMobile ? "100%" : "auto",
+                    alignItems: isMobile ? "center" : "flex-start"
+                }}>
 
                     {/* Header Card */}
-                    <Box sx={{ minWidth: "25vw", display: "flex", flexDirection: "column", justifyContent: "center", pr: 4 }}>
+                    <Box sx={{
+                        minWidth: isMobile ? "90%" : "25vw",
+                        maxWidth: isMobile ? "90%" : "none",
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "center",
+                        pr: isMobile ? 0 : 4,
+                        textAlign: isMobile ? "center" : "left",
+                        mb: isMobile ? 4 : 0
+                    }}>
                         <Typography variant="overline" color="primary" fontWeight={700} letterSpacing={2}>CAPABILITIES</Typography>
-                        <Typography variant="h2" fontWeight={800} sx={{ mb: 2, background: "linear-gradient(45deg, #1D1D1F, #424245)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>The Aegis Platform</Typography>
-                        <Typography variant="h5" color="text.secondary" lineHeight={1.6}>Scroll to explore how we are redefining reliability.</Typography>
+                        <Typography variant="h2" fontWeight={800} sx={{ mb: 2, background: "linear-gradient(45deg, #1D1D1F, #424245)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", fontSize: { xs: "2.5rem", md: "3.75rem" } }}>The Aegis Platform</Typography>
+                        <Typography variant="h5" color="text.secondary" lineHeight={1.6} sx={{ fontSize: { xs: "1.1rem", md: "1.5rem" } }}>Scroll to explore how we are redefining reliability.</Typography>
                     </Box>
 
                     {/* Feature Cards */}
                     {features.map((feature, i) => (
                         <Paper key={i} elevation={4} sx={{
-                            minWidth: "400px",
-                            height: "60vh",
+                            minWidth: isMobile ? "90%" : "400px",
+                            maxWidth: isMobile ? "90%" : "400px",
+                            height: isMobile ? "500px" : "60vh",
                             background: feature.bg,
                             borderRadius: "32px",
                             display: "flex",
@@ -77,7 +109,7 @@ export const HorizontalScrollSection = () => {
                             overflow: "hidden",
                             border: "1px solid rgba(255,255,255,0.1)",
                             transition: "transform 0.3s",
-                            "&:hover": { transform: "translateY(-10px) scale(1.02)" }
+                            "&:hover": { transform: isMobile ? "none" : "translateY(-10px) scale(1.02)" }
                         }}>
                             {/* Top Visual Area */}
                             <Box sx={{
