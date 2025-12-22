@@ -17,7 +17,7 @@ import { CommandBlock } from "../components/console/CommandBlock";
 import { MetricCard, LogEntry } from "../components/console/DashboardWidgets";
 import { ConsoleGridBackground } from "../components/console/ConsoleEffects";
 
-const API_URL = 'http://localhost:8080';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
 const Console = () => {
   const [input, setInput] = useState('');

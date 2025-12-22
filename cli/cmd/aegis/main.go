@@ -74,7 +74,11 @@ func main() {
 
 	ui.Info("Initializing Components...")
 
-	promClient, err := monitor.NewClient("http://localhost:9090")
+	promURL := os.Getenv("PROMETHEUS_URL")
+	if promURL == "" {
+		promURL = "http://localhost:9090"
+	}
+	promClient, err := monitor.NewClient(promURL)
 	if err != nil {
 		log.Fatal("Failed to connect to Prometheus: ", err)
 	}
@@ -84,7 +88,11 @@ func main() {
 
 		srv := server.NewServer(aiClient, promClient)
 		go func() {
-			if err := srv.Start(":8080"); err != nil {
+			port := os.Getenv("API_PORT")
+			if port == "" {
+				port = "8080"
+			}
+			if err := srv.Start(":" + port); err != nil {
 				log.Fatalf("Server Crashed: %v", err)
 			}
 		}()
@@ -112,7 +120,11 @@ func handleAction(resp *ai.Response, aiClient *ai.Client, userAsk string) {
 	case "QUERY":
 		ui.Box("Action Proposed", fmt.Sprintf("Type: QUERY\nPayload: %s", resp.Payload))
 
-		pClient, _ := monitor.NewClient("http://localhost:9090")
+		promURL := os.Getenv("PROMETHEUS_URL")
+		if promURL == "" {
+			promURL = "http://localhost:9090"
+		}
+		pClient, _ := monitor.NewClient(promURL)
 		val, err := pClient.Query(context.Background(), resp.Payload, time.Now())
 		if err != nil {
 			ui.Error("Execution failed: %v", err)
