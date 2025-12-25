@@ -4,7 +4,8 @@
 export PORT=${PORT:-8080}
 export API_PORT=${API_PORT:-8081}
 # Force IPv4 to avoid [::1] connection refused issues
-export PROMETHEUS_URL=${PROMETHEUS_URL:-http://127.0.0.1:9090}
+# We strictly use 127.0.0.1:9090 to prevent 'localhost' resolving to IPv6
+export PROMETHEUS_URL=http://127.0.0.1:9090
 
 echo "🚀 Starting SRE-Pilot System..."
 

@@ -76,7 +76,7 @@ func main() {
 
 	promURL := os.Getenv("PROMETHEUS_URL")
 	if promURL == "" {
-		promURL = "http://localhost:9090"
+		promURL = "http://127.0.0.1:9090"
 	}
 	promClient, err := monitor.NewClient(promURL)
 	if err != nil {
@@ -122,7 +122,7 @@ func handleAction(resp *ai.Response, aiClient *ai.Client, userAsk string) {
 
 		promURL := os.Getenv("PROMETHEUS_URL")
 		if promURL == "" {
-			promURL = "http://localhost:9090"
+			promURL = "http://127.0.0.1:9090"
 		}
 		pClient, _ := monitor.NewClient(promURL)
 		val, err := pClient.Query(context.Background(), resp.Payload, time.Now())
