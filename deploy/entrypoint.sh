@@ -17,7 +17,15 @@ mkdir -p /data/prometheus
 echo "   -> Node Exporter started on :9100"
 
 # Start Prometheus
-/bin/prometheus --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/data/prometheus --web.listen-address=:9090 &
+# Ensure correct ownership if prometheus user exists (it usually does on alpine apk)
+if id "prometheus" &>/dev/null; then
+    chown -R prometheus:prometheus /data/prometheus
+    chmod 777 /data/prometheus # Fallback to be safe
+    # Run as prometheus user if possible, or just as root for now since entrypoint is root.
+    # We will stick to running as root to avoid complexity, but use the correct path.
+fi
+
+/usr/bin/prometheus --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/data/prometheus --web.listen-address=:9090 &
 echo "   -> Prometheus starting..."
 sleep 5
 
