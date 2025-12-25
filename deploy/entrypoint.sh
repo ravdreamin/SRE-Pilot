@@ -11,7 +11,12 @@ echo "🚀 Starting SRE-Pilot System..."
 echo "📊 Starting Prometheus..."
 # Ensure prometheus user exists or just run as current user if compatible
 mkdir -p /data/prometheus
-/bin/prometheus --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/data/prometheus --web.listen-address=:9090 > /var/log/prometheus.log 2>&1 &
+# Start Node Exporter
+/usr/bin/node_exporter &
+echo "   -> Node Exporter started on :9100"
+
+# Start Prometheus
+/bin/prometheus --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/data/prometheus --web.listen-address=:9090 &
 echo "   -> Prometheus started on :9090"
 
 # 2. Start Aegis API

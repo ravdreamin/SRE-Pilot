@@ -27,7 +27,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o aegis ./cmd/aegis
 FROM alpine:latest
 
 # Install dependencies: Nginx, Prometheus, envsubst (gettext)
-RUN apk add --no-cache nginx prometheus gettext ca-certificates tzdata && \
+RUN apk add --no-cache nginx prometheus prometheus-node-exporter gettext ca-certificates tzdata && \
     mkdir -p /run/nginx
 
 WORKDIR /app
