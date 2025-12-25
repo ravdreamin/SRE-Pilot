@@ -7,7 +7,7 @@ COPY sre-pilot-ui/package.json sre-pilot-ui/package-lock.json ./
 RUN npm ci
 COPY sre-pilot-ui/ .
 # Build for production
-ENV VITE_API_URL=/api
+ENV VITE_API_URL=
 RUN npm run build
 
 # ==========================================
