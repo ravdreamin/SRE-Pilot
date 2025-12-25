@@ -7,11 +7,12 @@ export const TypingEffect = ({ text }) => {
 
     useEffect(() => {
         let index = 0;
+        setDisplayedText(""); // Reset on text change
         const timer = setInterval(() => {
-            setDisplayedText((prev) => prev + text.charAt(index));
             index++;
+            setDisplayedText(text.slice(0, index));
             if (index === text.length) clearInterval(timer);
-        }, 50); // Typing speed
+        }, 50);
         return () => clearInterval(timer);
     }, [text]);
 

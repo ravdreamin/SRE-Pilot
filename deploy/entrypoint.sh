@@ -17,7 +17,7 @@ echo "   -> Prometheus started on :9090"
 # 2. Start Aegis API
 echo "🧠 Starting Aegis AI Backend..."
 # We use nohup to keep it running
-/app/aegis --watch > /var/log/aegis.log 2>&1 &
+/app/aegis --watch &
 echo "   -> Aegis API started on :$API_PORT"
 
 # 3. Configure and Start Nginx
