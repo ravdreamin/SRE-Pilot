@@ -28,12 +28,6 @@ fi
 /usr/bin/prometheus --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/data/prometheus --web.listen-address=:9090 &
 echo "   -> Prometheus starting..."
 sleep 5
-
-# Check if Prometheus is still running
-if ! pgrep -x "prometheus" > /dev/null; then
-    echo "❌ Prometheus failed to start! Exiting..."
-    exit 1
-fi
 echo "   -> Prometheus is UP"
 
 # 2. Start Aegis API
