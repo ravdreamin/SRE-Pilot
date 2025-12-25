@@ -10,6 +10,7 @@ import SpeedIcon from '@mui/icons-material/Speed';
 import MemoryIcon from '@mui/icons-material/Memory';
 import StorageIcon from '@mui/icons-material/Storage';
 import TerminalIcon from '@mui/icons-material/Terminal';
+import HistoryIcon from '@mui/icons-material/History';
 
 // Components
 import { AegisLogo } from "../components/common/AegisLogo";
@@ -79,6 +80,8 @@ const Console = () => {
         let cpu = parsePrometheusValue(data.cpu);
         let memory = parsePrometheusValue(data.memory);
         let disk = parsePrometheusValue(data.disk);
+        let rps = parsePrometheusValue(data.rps);
+        let latency = parsePrometheusValue(data.latency);
 
         // CPU from Prometheus is often very low (< 1%) for idle systems
         // Scale it up a bit for visual representation or show real value
@@ -89,8 +92,10 @@ const Console = () => {
         const finalCpu = cpu !== null ? cpu.toFixed(1) : (20 + Math.random() * 15).toFixed(1);
         const finalMem = memory !== null ? memory.toFixed(1) : (40 + Math.random() * 20).toFixed(1);
         const finalDisk = disk !== null ? disk.toFixed(1) : '45.0';
+        const finalRps = rps !== null ? rps.toFixed(2) : '0.00';
+        const finalLatency = latency !== null ? latency.toFixed(3) : '0.000';
 
-        setMetrics({ cpu: finalCpu, memory: finalMem, disk: finalDisk });
+        setMetrics({ cpu: finalCpu, memory: finalMem, disk: finalDisk, rps: finalRps, latency: finalLatency });
         addLog(setWatchtowerLogs, 'INFO', `Metrics: CPU ${finalCpu}%, Mem ${finalMem}%`);
       } catch (err) {
         // Use mock data with slight variation
@@ -303,6 +308,9 @@ const Console = () => {
               <MetricCard icon={SpeedIcon} label="CPU Usage" value={metrics.cpu} unit="%" color="#3b82f6" />
               <MetricCard icon={MemoryIcon} label="Memory" value={metrics.memory} unit="%" color="#8b5cf6" />
               <MetricCard icon={StorageIcon} label="Disk" value={metrics.disk} unit="%" color="#f59e0b" />
+              <Box sx={{ my: 2, borderTop: '1px solid #eaeaea' }} />
+              <MetricCard icon={SpeedIcon} label="RPS" value={metrics.rps || '0.0'} unit="req/s" color="#10b981" />
+              <MetricCard icon={HistoryIcon} label="Latency" value={metrics.latency || '0.00'} unit="s" color="#ec4899" />
             </Stack>
           </Box>
         </motion.div>

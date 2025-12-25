@@ -9,7 +9,27 @@ import (
 	"sre-pilot/internal/monitor"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+)
+
+var (
+	httpRequestsTotal = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "http_requests_total",
+			Help: "Total number of HTTP requests",
+		},
+		[]string{"path", "method", "status"},
+	)
+	httpRequestDuration = promauto.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "http_request_duration_seconds",
+			Help:    "HTTP request duration in seconds",
+			Buckets: prometheus.DefBuckets,
+		},
+		[]string{"path", "method"},
+	)
 )
 
 type Server struct {
@@ -37,11 +57,39 @@ func (s *Server) Start(addr string) error {
 
 	mux.Handle("/metrics", promhttp.Handler())
 
-	mux.HandleFunc("/api/chat", s.handleChat)
-	mux.HandleFunc("/api/metrics", s.handleMetrics)
+	// Wrap handlers with instrumentation
+	mux.Handle("/api/chat", s.instrumentHandler("/api/chat", http.HandlerFunc(s.handleChat)))
+	mux.Handle("/api/metrics", s.instrumentHandler("/api/metrics", http.HandlerFunc(s.handleMetrics)))
 
 	log.Printf("🔭 Observability Server started on %s", addr)
 	return http.ListenAndServe(addr, mux)
+}
+
+func (s *Server) instrumentHandler(path string, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+
+		// Wrap ResponseWriter to capture status code
+		ww := &responseWriter{ResponseWriter: w, status: http.StatusOK}
+
+		next.ServeHTTP(ww, r)
+
+		duration := time.Since(start).Seconds()
+
+		httpRequestsTotal.WithLabelValues(path, r.Method, fmt.Sprintf("%d", ww.status)).Inc()
+		httpRequestDuration.WithLabelValues(path, r.Method).Observe(duration)
+	})
+}
+
+// responseWriter wrapper to capture status code
+type responseWriter struct {
+	http.ResponseWriter
+	status int
+}
+
+func (rw *responseWriter) WriteHeader(code int) {
+	rw.status = code
+	rw.ResponseWriter.WriteHeader(code)
 }
 
 func (s *Server) handleMetrics(w http.ResponseWriter, r *http.Request) {
@@ -71,6 +119,18 @@ func (s *Server) handleMetrics(w http.ResponseWriter, r *http.Request) {
 	diskQuery := `(1 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})) * 100`
 	if diskVal, err := s.Monitor.Query(ctx, diskQuery, time.Now()); err == nil {
 		result["disk"] = diskVal.String()
+	}
+
+	// Query App RPS
+	rpsQuery := `sum(rate(http_requests_total[1m]))`
+	if rpsVal, err := s.Monitor.Query(ctx, rpsQuery, time.Now()); err == nil {
+		result["rps"] = rpsVal.String()
+	}
+
+	// Query App Latency
+	latQuery := `sum(rate(http_request_duration_seconds_sum[1m])) / sum(rate(http_request_duration_seconds_count[1m]))`
+	if latVal, err := s.Monitor.Query(ctx, latQuery, time.Now()); err == nil {
+		result["latency"] = latVal.String()
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -106,22 +166,6 @@ func (s *Server) handleChat(w http.ResponseWriter, r *http.Request) {
 		val, err := s.Monitor.Query(r.Context(), resp.Payload, time.Now())
 		if err != nil {
 			log.Printf("Monitor Query failed: %v", err)
-			// We don't fail the request, but we might want to annotate the response
-			// or maybe we just return the error in a field?
-			// For now let's just log it and maybe append to payload or separate field.
-			// The original main.go logic did a follow-up explanation.
-			// Let's keep it simple for now: return the result as part of the response if possible,
-			// or let the client handle it.
-			// Actually, the main.go logic:
-			// 1. Analyze -> Resp
-			// 2. Query -> Result
-			// 3. Analyze(Result) -> Explanation
-
-			// To keep the API simple (request/response), maybe we should do the full loop here?
-			// Yes, let's do the full loop if it's a QUERY.
-
-			// But wait, the previous main.go logic did a SECOND analyze call.
-			// Let's replicate that logic here for a "smart" response.
 		} else {
 			// Query successful, let's get the explanation
 			explanationReq := ai.Request{
@@ -131,11 +175,6 @@ func (s *Server) handleChat(w http.ResponseWriter, r *http.Request) {
 			}
 			explanation, err := s.AI.Analyze(r.Context(), explanationReq)
 			if err == nil && explanation.Action == "EXPLAIN" {
-				// Replace the original response with the explanation, but maybe keep the query info?
-				// For the API, let's return the final explanation as the main payload,
-				// or maybe we return a structured response?
-				// The ai.Response struct has Action/Payload/Confidence.
-				// Let's stick to returning the AI response JSON, but modify it to contain the explanation.
 				resp = explanation
 			}
 		}
