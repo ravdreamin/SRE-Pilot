@@ -8,7 +8,7 @@ import ScrollHandler from "./components/ScrollHandler";
 import Hero from "./pages/Hero";
 import Documentation from "./pages/Documentation";
 import Console from "./pages/Console";
-import Dashboard from "./pages/Dashboard";
+
 
 function App() {
   const [mode, setMode] = useState("light");
@@ -27,7 +27,7 @@ function App() {
         <Layout toggleColorMode={toggleColorMode} mode={mode}>
           <Routes>
             <Route path="/" element={<Hero />} />
-            <Route path="/dashboard" element={<Dashboard />} />
+
             <Route path="/docs" element={<Documentation />} />
             <Route path="/console" element={<Console />} />
           </Routes>

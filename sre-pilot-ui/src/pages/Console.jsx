@@ -15,7 +15,7 @@ import HistoryIcon from '@mui/icons-material/History';
 // Components
 import { AegisLogo } from "../components/common/AegisLogo";
 import { CommandBlock } from "../components/console/CommandBlock";
-import { MetricCard, LogEntry } from "../components/console/DashboardWidgets";
+import { MetricCard, LogEntry } from "../components/console/ConsoleWidgets";
 import { ConsoleGridBackground } from "../components/console/ConsoleEffects";
 
 const API_URL = import.meta.env.VITE_API_URL !== undefined ? import.meta.env.VITE_API_URL : 'http://localhost:8080';
