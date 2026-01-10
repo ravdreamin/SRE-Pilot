@@ -85,25 +85,7 @@ const Layout = ({ children }) => {
 
             {/* Right Side: Desktop Action + Mobile Toggle */}
             <Box sx={{ display: "flex", gap: 1.5, alignItems: 'center' }}>
-              <Button
-                component={Link}
-                to="/console"
-                sx={{
-                  display: { xs: "none", md: "flex" },
-                  bgcolor: "#1D1D1F",
-                  color: "#FFFFFF",
-                  textTransform: "none",
-                  borderRadius: "8px",
-                  px: 2,
-                  py: 0.8,
-                  fontSize: "0.85rem",
-                  fontWeight: 600,
-                  "&:hover": { bgcolor: "#000000" },
-                  boxShadow: "0 2px 5px rgba(0,0,0,0.1)"
-                }}
-              >
-                Access Console
-              </Button>
+
 
               {/* Mobile Menu Icon */}
               <IconButton
@@ -151,21 +133,7 @@ const Layout = ({ children }) => {
             ))}
           </List>
           <Box sx={{ mt: 4 }}>
-            <Button
-              fullWidth
-              variant="contained"
-              component={Link} to="/console"
-              onClick={toggleDrawer(false)}
-              sx={{
-                bgcolor: "#1D1D1F",
-                py: 1.5,
-                borderRadius: 3,
-                fontSize: '1rem',
-                textTransform: 'none'
-              }}
-            >
-              Access Console
-            </Button>
+
           </Box>
         </Box>
       </Drawer>

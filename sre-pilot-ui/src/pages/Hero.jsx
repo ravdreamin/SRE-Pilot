@@ -3,12 +3,12 @@ import { Container, Typography, Box, Button, Stack } from "@mui/material";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
+import DescriptionIcon from "@mui/icons-material/Description";
 import demoVideo from "../assets/demo.mov";
 import StatusRail from "../components/StatusRail";
 
 // Components
-import { GraphParticleEffect } from "../components/home/BackgroundEffects";
+
 import { TypingEffect, LiveStatusPulse, DynamicMetricPill } from "../components/home/HeroWidgets";
 import { HorizontalScrollSection } from "../components/home/HorizontalScrollSection";
 import { PlatformOptionsSection, ContactSection, Footer } from "../components/home/HomeSections";
@@ -19,7 +19,7 @@ const Hero = () => {
 
       {/* 1. Hero Area */}
       <Box sx={{ position: "relative", minHeight: "100vh", width: "100%", marginTop: "-64px", paddingTop: "140px", display: "flex", flexDirection: "column", alignItems: "center", pb: 15, overflow: "hidden" }}>
-        <GraphParticleEffect />
+
         <Container maxWidth="lg" sx={{ position: "relative", zIndex: 10 }}>
           <Box sx={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center" }}>
 
@@ -72,10 +72,10 @@ const Hero = () => {
                 }}>
                   Start Monitoring
                 </Button>
-                <Button component={Link} to="/docs" startIcon={<PlayCircleOutlineIcon />} size="large" sx={{
+                <Button component={Link} to="/docs" startIcon={<DescriptionIcon />} size="large" sx={{
                   color: "#1d1d1f", bgcolor: "rgba(255,255,255,0.8)", border: "1px solid rgba(0,0,0,0.1)", borderRadius: 99, px: 4, py: 1.8, fontSize: "1rem", textTransform: "none", fontWeight: 600, backdropFilter: "blur(10px)", "&:hover": { bgcolor: "#fff", borderColor: "#000" }, width: { xs: "100%", sm: "auto" }
                 }}>
-                  Watch Demo
+                  Docs
                 </Button>
               </Box>
             </motion.div>
