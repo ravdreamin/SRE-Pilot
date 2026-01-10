@@ -15,6 +15,7 @@ const Layout = ({ children }) => {
 
   const navItems = [
     { label: "Features", path: "/#features" },
+    { label: "Dashboard", path: "/dashboard" },
     { label: "Documentation", path: "/docs" },
     { label: "Console", path: "/console" },
     { label: "Contact", path: "/#contact" }

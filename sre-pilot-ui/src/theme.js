@@ -41,7 +41,7 @@ export const createAppTheme = (mode) =>
       h3: { fontWeight: 600, letterSpacing: "-0.01em" },
     },
     shape: {
-      borderRadius: 16,
+      borderRadius: 20,
     },
     components: {
       MuiCssBaseline: {
