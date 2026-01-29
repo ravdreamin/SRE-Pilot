@@ -7,11 +7,9 @@ import (
 	"log"
 	"os"
 	"sre-pilot/internal/ai"
-	"sre-pilot/internal/billing"
 	"sre-pilot/internal/monitor"
 	"sre-pilot/internal/server"
 	"sre-pilot/internal/ui"
-	"sre-pilot/internal/watchtower"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -19,25 +17,20 @@ import (
 
 func main() {
 	if err := godotenv.Load(); err != nil {
-
+		// .env file is optional
 	}
 
 	dryRun := flag.Bool("dry-run", false, "Enable dry-run mode (no changes applied)")
-	watch := flag.Bool("watch", false, "Run in Watchtower mode")
-	ask := flag.String("ask", "", "Ask Aegis a question")
+	ask := flag.String("ask", "", "Ask QryPilot a question")
+	watch := flag.Bool("watch", false, "Start API server mode")
 	flag.Parse()
 
-	ui.Header("Aegis | SRE-PILOT ")
+	ui.Header("QryPilot")
 
 	if *dryRun {
 		ui.Warning("Running in DRY-RUN mode")
 	} else {
 		ui.Success("System Online")
-	}
-
-	config, err := billing.LoadConfig()
-	if err != nil {
-		log.Printf("Initializing new user config...")
 	}
 
 	key := os.Getenv("GROQ_API_KEY")
@@ -52,6 +45,36 @@ func main() {
 		log.Fatal("Failed to initialize AI client: ", err)
 	}
 
+	promURL := os.Getenv("PROMETHEUS_URL")
+	if promURL == "" {
+		promURL = "http://127.0.0.1:9090"
+	}
+
+	promClient, err := monitor.NewClient(promURL)
+	if err != nil {
+		log.Fatal("Failed to connect to Prometheus: ", err)
+	}
+
+	// Server mode
+	if *watch {
+		ui.Info("Starting API Server...")
+
+		port := os.Getenv("PORT")
+		if port == "" {
+			port = "8081"
+		}
+
+		events := make(chan string, 100)
+		srv := server.NewServer(aiClient, promClient, events)
+
+		ui.Success("API Server starting on :%s", port)
+		if err := srv.Start(":" + port); err != nil {
+			log.Fatal("Server error: ", err)
+		}
+		return
+	}
+
+	// Ask mode
 	if *ask != "" {
 		ui.Info("Thinking ...")
 		resp, err := aiClient.Analyze(context.Background(), ai.Request{
@@ -63,69 +86,39 @@ func main() {
 			log.Fatal("Failed to get response: ", err)
 		}
 
-		config.QueryCount++
-		billing.SaveConfig(config)
-
 		logAction(resp.Action, resp.Payload)
-
-		handleAction(resp, aiClient, *ask)
+		handleAction(resp, aiClient, promClient, *ask)
 		return
 	}
 
+	// Default: connectivity check
 	ui.Info("Initializing Components...")
-
-	promURL := os.Getenv("PROMETHEUS_URL")
-	if promURL == "" {
-		promURL = "http://127.0.0.1:9090"
-	}
-	promClient, err := monitor.NewClient(promURL)
-	if err != nil {
-		log.Fatal("Failed to connect to Prometheus: ", err)
-	}
-
-	if *watch {
-		ui.Header("WATCHTOWER MODE ACTIVE")
-
-		srv := server.NewServer(aiClient, promClient)
-		go func() {
-			port := os.Getenv("API_PORT")
-			if port == "" {
-				port = "8080"
-			}
-			if err := srv.Start(":" + port); err != nil {
-				log.Fatalf("Server Crashed: %v", err)
-			}
-		}()
-
-		engine := watchtower.NewEngine(promClient)
-		go engine.Run(context.Background())
-		ui.Success("Aegis is watching... (Press Ctrl+C to stop)")
-		select {}
-	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	result, err := promClient.Query(ctx, "up", time.Now())
+	val, err := promClient.Query(ctx, "up{instance=~'.+:8080'}", time.Now())
 	if err != nil {
-		log.Fatalf("Connectivity Check Failed: %v", err)
+		ui.Error("Connectivity Check Failed: %v", err)
+		ui.Info("Ensure Prometheus is running at %s and scraping localhost:8080", promURL)
+	} else {
+		if val.String() == "" || val.String() == "()" {
+			ui.Warning("Prometheus is active but NOT scraping localhost:8080 yet")
+			ui.Info("Please restart your Prometheus server to apply the configuration changes")
+		} else {
+			ui.Success("Connectivity Check: OK (Prometheus is scraping Aegis)")
+		}
 	}
 
-	ui.Success("Connectivity Check: OK")
-	fmt.Printf("%s\n", result)
+	ui.Info("Use --ask \"question\" to query, or --watch to start server mode")
 }
 
-func handleAction(resp *ai.Response, aiClient *ai.Client, userAsk string) {
+func handleAction(resp *ai.Response, aiClient *ai.Client, promClient monitor.Client, userAsk string) {
 	switch resp.Action {
 	case "QUERY":
 		ui.Box("Action Proposed", fmt.Sprintf("Type: QUERY\nPayload: %s", resp.Payload))
 
-		promURL := os.Getenv("PROMETHEUS_URL")
-		if promURL == "" {
-			promURL = "http://127.0.0.1:9090"
-		}
-		pClient, _ := monitor.NewClient(promURL)
-		val, err := pClient.Query(context.Background(), resp.Payload, time.Now())
+		val, err := promClient.Query(context.Background(), resp.Payload, time.Now())
 		if err != nil {
 			ui.Error("Execution failed: %v", err)
 			return

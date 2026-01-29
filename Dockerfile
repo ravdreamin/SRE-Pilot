@@ -2,10 +2,10 @@
 # Stage 1: Build Frontend (React)
 # ==========================================
 FROM node:20-alpine AS frontend-builder
-WORKDIR /app/ui
-COPY sre-pilot-ui/package.json sre-pilot-ui/package-lock.json ./
+WORKDIR /app/frontend
+COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
-COPY sre-pilot-ui/ .
+COPY frontend/ .
 # Build for production
 ENV VITE_API_URL=
 RUN npm run build
@@ -13,7 +13,7 @@ RUN npm run build
 # ==========================================
 # Stage 2: Build Backend (Go)
 # ==========================================
-FROM golang:1.25-alpine AS backend-builder
+FROM golang:1.22-alpine AS backend-builder
 WORKDIR /app/cli
 COPY cli/go.mod cli/go.sum ./
 RUN go mod download
@@ -33,7 +33,7 @@ RUN apk add --no-cache nginx prometheus prometheus-node-exporter gettext ca-cert
 WORKDIR /app
 
 # Copy Frontend Assets
-COPY --from=frontend-builder /app/ui/dist /usr/share/nginx/html
+COPY --from=frontend-builder /app/frontend/dist /usr/share/nginx/html
 
 # Copy Backend Binary
 COPY --from=backend-builder /app/cli/aegis /app/aegis
@@ -46,7 +46,7 @@ COPY cli/deployments/prometheus.yml /etc/prometheus/prometheus.yml
 
 # Permissions
 RUN chmod +x /app/entrypoint.sh && \
-    mkdir -p /var/log && \
+    mkdir -p /var/log /app/data && \
     touch /var/log/prometheus.log /var/log/aegis.log && \
     chmod 777 /var/log/prometheus.log /var/log/aegis.log
 

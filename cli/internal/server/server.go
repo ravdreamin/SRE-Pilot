@@ -35,12 +35,14 @@ var (
 type Server struct {
 	AI      *ai.Client
 	Monitor monitor.Client
+	Events  <-chan string
 }
 
-func NewServer(aiClient *ai.Client, monitorClient monitor.Client) *Server {
+func NewServer(aiClient *ai.Client, monitorClient monitor.Client, events <-chan string) *Server {
 	return &Server{
 		AI:      aiClient,
 		Monitor: monitorClient,
+		Events:  events,
 	}
 }
 
@@ -60,6 +62,7 @@ func (s *Server) Start(addr string) error {
 	// Wrap handlers with instrumentation
 	mux.Handle("/api/chat", s.instrumentHandler("/api/chat", http.HandlerFunc(s.handleChat)))
 	mux.Handle("/api/metrics", s.instrumentHandler("/api/metrics", http.HandlerFunc(s.handleMetrics)))
+	mux.Handle("/api/events", s.instrumentHandler("/api/events", http.HandlerFunc(s.handleEvents)))
 
 	log.Printf("🔭 Observability Server started on %s", addr)
 	return http.ListenAndServe(addr, mux)
@@ -182,6 +185,31 @@ func (s *Server) handleChat(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
+}
+
+func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request) {
+	enableCors(w)
+	if r.Method == "OPTIONS" {
+		return
+	}
+
+	// Non-blocking read of up to 10 events
+	var events []string
+	for i := 0; i < 10; i++ {
+		select {
+		case event := <-s.Events:
+			events = append(events, event)
+		default:
+			// No more events
+			goto Encode
+		}
+	}
+
+Encode:
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"events": events,
+	})
 }
 
 func enableCors(w http.ResponseWriter) {

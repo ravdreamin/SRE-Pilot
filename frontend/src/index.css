@@ -1,0 +1,112 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 0 0% 2%;
+  --foreground: 0 0% 90%;
+  --primary: 156 72% 67%;
+  --primary-muted: 156 72% 67% / 0.1;
+  --secondary: 0 0% 10%;
+  --muted: 0 0% 15%;
+  --muted-foreground: 0 0% 50%;
+  --border: 0 0% 12%;
+  --card: 0 0% 4%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+    outline-color: hsl(var(--primary) / 0.5);
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  code,
+  kbd,
+  pre,
+  .mono {
+    font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
+  }
+}
+
+@layer components {
+  .btn-minimal {
+    @apply px-4 py-2 text-sm transition-all duration-200 hover:bg-muted active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none border border-transparent hover:border-border;
+  }
+
+  .input-minimal {
+    @apply bg-card border border-border px-4 py-2 text-sm transition-all duration-200 focus:border-primary/50 focus:outline-none focus:ring-4 focus:ring-primary/5 placeholder:text-muted-foreground;
+  }
+
+  .interactive-border {
+    @apply border border-border transition-colors duration-300 hover:border-primary/30;
+  }
+}
+
+/* Micro-animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideRight {
+  from {
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.animate-in {
+  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide {
+  animation: slideRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.cursor-blink::after {
+  content: '_';
+  animation: blink 1s step-end infinite;
+}
+
+.stagger-1 {
+  animation-delay: 50ms;
+  opacity: 0;
+}
+
+.stagger-2 {
+  animation-delay: 100ms;
+  opacity: 0;
+}
+
+.stagger-3 {
+  animation-delay: 150ms;
+  opacity: 0;
+}
+
+.stagger-4 {
+  animation-delay: 200ms;
+  opacity: 0;
+}

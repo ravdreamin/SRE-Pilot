@@ -13,6 +13,7 @@ echo "🚀 Starting SRE-Pilot System..."
 echo "📊 Starting Prometheus..."
 # Ensure prometheus user exists or just run as current user if compatible
 mkdir -p /data/prometheus
+
 # Start Node Exporter
 /usr/bin/node_exporter &
 echo "   -> Node Exporter started on :9100"
@@ -22,8 +23,6 @@ echo "   -> Node Exporter started on :9100"
 if id "prometheus" &>/dev/null; then
     chown -R prometheus:prometheus /data/prometheus
     chmod 777 /data/prometheus # Fallback to be safe
-    # Run as prometheus user if possible, or just as root for now since entrypoint is root.
-    # We will stick to running as root to avoid complexity, but use the correct path.
 fi
 
 /usr/bin/prometheus --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/data/prometheus --web.listen-address=:9090 &
@@ -31,16 +30,22 @@ echo "   -> Prometheus starting..."
 sleep 5
 echo "   -> Prometheus is UP"
 
-# 2. Start Aegis API
-echo "🧠 Starting Aegis AI Backend..."
-# We use nohup to keep it running
-/app/aegis --watch &
-echo "   -> Aegis API started on :$API_PORT"
+# 2. Start Aegis API Server
+echo "🧠 Starting Aegis AI Backend on port $API_PORT..."
+cd /app
+./aegis --watch > /var/log/aegis.log 2>&1 &
+sleep 2
+echo "   -> Aegis API Server is UP"
 
 # 3. Configure and Start Nginx
 echo "🌐 Starting Nginx Web Server on port $PORT..."
 # Replace variables in nginx.conf
 envsubst '${PORT} ${API_PORT}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
+
+echo "✅ All services started!"
+echo "   Frontend: http://localhost:$PORT"
+echo "   API:      http://localhost:$API_PORT"
+echo "   Metrics:  http://localhost:9090"
 
 # Start Nginx in foreground
 nginx -g 'daemon off;'
