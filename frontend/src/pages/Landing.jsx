@@ -56,20 +56,16 @@ export default function Landing() {
                                 </div>
                                 <span className="text-[10px] mono text-muted-foreground uppercase tracking-widest">qrypilot --ask</span>
                             </div>
-                            <div className="p-8 font-mono text-xs md:text-sm leading-relaxed">
-                                <div className="flex gap-3 mb-4">
-                                    <span className="text-primary">$</span>
-                                    <span className="cursor-blink">whats using the most memory right now?</span>
-                                </div>
-                                <div className="text-muted-foreground mb-6 pl-6 border-l border-primary/20 animate-in stagger-3">
-                                    → Thinking...<br />
-                                    → Translating: topk(5, node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes)<br />
-                                    → Fetching metrics from Prometheus...
-                                </div>
-                                <div className="bg-primary/5 border border-primary/10 p-4 rounded text-primary animate-in stagger-4">
-                                    Result: System is healthy. Highest usage by user-process-82 (1.2GB).
-                                    Overall memory pressure is low (8.4%).
-                                </div>
+    <div className="relative aspect-video bg-black">
+                                <video 
+                                    src="/demo.mov" 
+                                    autoPlay 
+                                    loop 
+                                    muted 
+                                    playsInline
+                                    className="w-full h-full object-cover"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-background/20 to-transparent pointer-events-none" />
                             </div>
                         </div>
                         {/* Shadow decoration */}
